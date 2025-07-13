@@ -69,10 +69,23 @@ float calculateDistance(float x1, float y1, float x2, float y2)
 bool transformOdomToMap(float odom_x, float odom_y, float& map_x, float& map_y)
 {
     try {
+        // 使用稍旧的时间戳避免TF未来时间问题
+        ros::Time transform_time = ros::Time::now() - ros::Duration(0.1);
+        
+        // 检查变换是否可用
+        if (!tf_listener->canTransform("map", "odom", transform_time)) {
+            // 尝试使用最新可用的变换
+            transform_time = ros::Time(0);
+            if (!tf_listener->canTransform("map", "odom", transform_time)) {
+                ROS_WARN_THROTTLE(1.0, "Cannot transform from odom to map");
+                return false;
+            }
+        }
+        
         // 创建odom坐标系中的点
         geometry_msgs::PointStamped odom_point;
         odom_point.header.frame_id = "odom";
-        odom_point.header.stamp = ros::Time(0);  // 使用最新的变换
+        odom_point.header.stamp = transform_time;  // 使用一致的时间戳
         odom_point.point.x = odom_x;
         odom_point.point.y = odom_y;
         odom_point.point.z = 0.0;
@@ -99,16 +112,37 @@ void pose_callback(const nav_msgs::Odometry &poses)
     float odom_y = poses.pose.pose.position.y;
     
     // 转换到map坐标系
-    if (!transformOdomToMap(odom_x, odom_y, x_current_map, y_current_map)) {
+    float new_map_x, new_map_y;
+    if (!transformOdomToMap(odom_x, odom_y, new_map_x, new_map_y)) {
         return;  // TF变换失败，跳过此次更新
     }
     
+    // 瞬移检测和过滤
+    if (position_initialized) {
+        float jump_distance = calculateDistance(x_current_map, y_current_map, new_map_x, new_map_y);
+        
+        // 如果位置跳跃过大，过滤掉这次更新
+        if (jump_distance > max_jump_threshold) {
+            ROS_WARN_THROTTLE(1.0, "Position jump detected (%.3f m), filtering out update from (%.3f,%.3f) to (%.3f,%.3f)", 
+                            jump_distance, x_current_map, y_current_map, new_map_x, new_map_y);
+            return;  // 拒绝这次更新
+        }
+        
+        // 如果变化太小，也跳过（减少噪声）
+        if (jump_distance < 0.01) {
+            return;  // 位置变化太小，跳过
+        }
+    }
+    
+    // 更新位置
+    x_current_map = new_map_x;
+    y_current_map = new_map_y;
     position_initialized = true;
     
     // 更新已清扫路径（在map坐标系中）
     geometry_msgs::PoseStamped current_pose;
     current_pose.header.frame_id = "map";
-    current_pose.header.stamp = ros::Time(0);  // 固定时间戳避免TF漂移
+    current_pose.header.stamp = ros::Time(0);  // 使用固定时间戳避免RViz显示跳跃
     current_pose.pose.position.x = x_current_map;
     current_pose.pose.position.y = y_current_map;
     current_pose.pose.position.z = 0.0;
@@ -143,12 +177,12 @@ void pose_callback(const nav_msgs::Odometry &poses)
         
         // 更新路径头部信息
         cleaned_path.header.frame_id = "map";
-        cleaned_path.header.stamp = ros::Time(0);  // 固定时间戳
+        cleaned_path.header.stamp = ros::Time(0);  // 使用固定时间戳避免RViz显示问题
         
-        // 定期发布完整路径（降低发布频率以提高性能）
+        // 降低发布频率以减少RViz显示跳跃
         static int publish_counter = 0;
         publish_counter++;
-        if (publish_counter >= 5) {  // 每5次更新发布一次
+        if (publish_counter >= 10) {  // 改为每10次更新发布一次，降低频率
             cleaned_path_pub.publish(cleaned_path);
             publish_counter = 0;
             
@@ -182,7 +216,7 @@ void path_callback(const nav_msgs::Path &path)
             // 首次接收路径，初始化清扫路径
             cleaned_path.poses.clear();
             cleaned_path.header.frame_id = "map";
-            cleaned_path.header.stamp = ros::Time(0);
+            cleaned_path.header.stamp = ros::Time(0);  // 使用固定时间戳避免RViz跳跃
             ROS_INFO("First path received with %d goals, initializing cleaned path", (int)path_points.size());
         } else {
             // 路径更新，保留已有的清扫历史
@@ -299,8 +333,20 @@ int main(int argc, char *argv[])
     // 初始化TF监听器
     tf_listener = new tf::TransformListener();
     
-    // 等待TF缓冲区填充
-    ros::Duration(1.0).sleep();
+    // 等待TF缓冲区填充和关键变换可用
+    ROS_INFO("Waiting for TF transforms...");
+    ros::Duration(2.0).sleep();
+    
+    // 等待关键的TF变换可用
+    try {
+        tf_listener->waitForTransform("map", "odom", ros::Time::now(), ros::Duration(10.0));
+        tf_listener->waitForTransform("map", "base_footprint", ros::Time::now(), ros::Duration(10.0));
+        ROS_INFO("TF transforms are ready");
+    }
+    catch (tf::TransformException& ex) {
+        ROS_ERROR("Failed to get TF transforms: %s", ex.what());
+        ROS_ERROR("This may cause position jumping issues!");
+    }
     
     // 订阅器
     ros::Subscriber odom_sub = nh.subscribe("/odom", 1000, pose_callback);

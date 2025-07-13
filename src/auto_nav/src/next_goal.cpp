@@ -128,25 +128,33 @@ int main(int argc, char *argv[])
       new_path = false;
     }
 
-    if (!pathPlanner.Path.empty())
+    if (!pathPlanner.Path.empty() && count < pathPlanner.Path.size())
     {
       // 当前距离达到了
       if (sqrt(pow(x_current - pathPlanner.Path[count].x, 2) + pow(y_current - pathPlanner.Path[count].y, 2)) <= normeNextGoal)
       {
         count++;
         goal_reached = false;
+        // 防止count超出数组范围
+        if (count >= pathPlanner.Path.size()) {
+          ROS_INFO("所有路径点已完成！");
+          count = pathPlanner.Path.size() - 1;  // 保持在最后一个点
+        }
       }
       if (goal_reached == false)
       {
-        goal_msgs.header.frame_id = "odom";
+        goal_msgs.header.frame_id = "map";  // 修复：使用map坐标系而非odom
         goal_msgs.header.stamp = ros::Time::now();
         goal_msgs.pose.position.x = pathPlanner.Path[count].x;
         goal_msgs.pose.position.y = pathPlanner.Path[count].y;
         goal_msgs.pose.position.z = 0;
-        if (count < pathPlanner.Path.size())
+        // 修复：添加数组边界检查防止越界
+        if (count + 1 < pathPlanner.Path.size())
           angle = atan2(pathPlanner.Path[count + 1].y - pathPlanner.Path[count].y, pathPlanner.Path[count + 1].x - pathPlanner.Path[count].x);
-        else
+        else if (pathPlanner.Path.size() > 1)
           angle = atan2(pathPlanner.Path[0].y - pathPlanner.Path[count].y, pathPlanner.Path[0].x - pathPlanner.Path[count].x);
+        else
+          angle = 0.0;  // 默认角度
         float w,x,y,z;
         eulerAngles2Quaternion(angle,w,x,y,z);
         goal_msgs.pose.orientation.w = w;

@@ -82,7 +82,7 @@ rosrun auto_nav path_planning
 
 ### Move_base优化参数
 ```yaml
-max_vel_x: 0.3              # 降低最大速度提高稳定性
+max_vel_x: 0.6              # 降低最大速度提高稳定性
 max_vel_theta: 0.8          # 降低角速度
 acc_lim_x: 0.5              # 降低加速度使运动更平滑
 path_distance_bias: 64.0    # 大幅增加路径跟踪权重

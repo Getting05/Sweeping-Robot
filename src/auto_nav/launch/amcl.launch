@@ -40,7 +40,7 @@
     
     <!-- 重采样和变换参数 -->
     <param name="resample_interval" value="2"/><!-- 提高重采样频率 -->
-    <param name="transform_tolerance" value="0.05"/><!-- 降低变换容差 -->
+    <param name="transform_tolerance" value="0.2"/><!-- 增加变换容差以减少跳跃 -->
     <param name="recovery_alpha_slow" value="0.001"/><!-- 启用慢速恢复 -->
     <param name="recovery_alpha_fast" value="0.1"/><!-- 启用快速恢复 -->
     
