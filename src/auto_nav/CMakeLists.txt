@@ -158,6 +158,7 @@ include
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(path_planning src/path_planning.cpp src/path_planning_node.cpp)
 add_executable(next_goal src/next_goal.cpp)
+add_executable(sequential_goal src/sequential_goal.cpp)
 add_executable(test_goal src/test_goal.cpp)
 add_executable(test_path src/test_path.cpp)
 ## Rename C++ executable without prefix
@@ -176,6 +177,9 @@ add_executable(test_path src/test_path.cpp)
 # )
 target_link_libraries(path_planning ${catkin_LIBRARIES} ${OpenCV_LIBS})
 target_link_libraries(next_goal
+	${catkin_LIBRARIES}
+)
+target_link_libraries(sequential_goal
 	${catkin_LIBRARIES}
 )
 target_link_libraries(test_goal
