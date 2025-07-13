@@ -28,7 +28,7 @@ bool goal_published = false;
 
 // 参数
 float tolerance_goal = 0.3;  // 目标容差
-float goal_timeout = 10.0;   // 目标超时时间(秒) - 增加到10秒
+float goal_timeout = 3;   // 目标超时时间(秒) - 增加到10秒
 ros::Time goal_start_time;
 int consecutive_timeouts = 0;
 int max_consecutive_timeouts = 5;  // 增加容错次数
@@ -137,6 +137,7 @@ void pose_callback(const nav_msgs::Odometry &poses)
     }
     
     if (should_add_point) {
+        // 永久保存到历史路径中，不删除任何点
         cleaned_path.poses.push_back(current_pose);
         last_position = current_pose;
         
@@ -144,8 +145,19 @@ void pose_callback(const nav_msgs::Odometry &poses)
         cleaned_path.header.frame_id = "map";
         cleaned_path.header.stamp = ros::Time(0);  // 固定时间戳
         
-        // 发布清扫路径
-        cleaned_path_pub.publish(cleaned_path);
+        // 定期发布完整路径（降低发布频率以提高性能）
+        static int publish_counter = 0;
+        publish_counter++;
+        if (publish_counter >= 5) {  // 每5次更新发布一次
+            cleaned_path_pub.publish(cleaned_path);
+            publish_counter = 0;
+            
+            // 输出路径统计信息
+            if (cleaned_path.poses.size() % 100 == 0) {  // 每100个点打印一次
+                ROS_INFO("Cleaned path now has %d points, current position: (%.2f, %.2f)", 
+                        (int)cleaned_path.poses.size(), x_current_map, y_current_map);
+            }
+        }
     }
 }
 
@@ -163,15 +175,22 @@ void path_callback(const nav_msgs::Path &path)
         path_points = path.poses;
         current_goal_index = 0;
         goal_published = false;
-        path_received = true;
         consecutive_timeouts = 0;
         
-        // 重置清扫路径
-        cleaned_path.poses.clear();
-        cleaned_path.header.frame_id = "map";
-        cleaned_path.header.stamp = ros::Time(0);
+        // 只在首次接收路径时清空历史轨迹，后续更新保留历史
+        if (!path_received) {
+            // 首次接收路径，初始化清扫路径
+            cleaned_path.poses.clear();
+            cleaned_path.header.frame_id = "map";
+            cleaned_path.header.stamp = ros::Time(0);
+            ROS_INFO("First path received with %d goals, initializing cleaned path", (int)path_points.size());
+        } else {
+            // 路径更新，保留已有的清扫历史
+            ROS_INFO("Path updated with %d goals, keeping existing cleaned path (%d points)", 
+                    (int)path_points.size(), (int)cleaned_path.poses.size());
+        }
         
-        ROS_INFO("New path received with %d goals, cleaned path reset", (int)path_points.size());
+        path_received = true;
     }
 }
 

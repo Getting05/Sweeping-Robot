@@ -1,41 +1,33 @@
 TrajectoryPlannerROS:
 
-# Robot Configuration Parameters - 降低速度提高稳定性
-  max_vel_x: 0.6 # 降低X方向最大速度
-  min_vel_x: -0.3 # 限制后退速度
+# Robot Configuration Parameters - 提高速度
+  max_vel_x: 0.8        # 提高X方向最大速度
+  min_vel_x: 0.2        # 提高最小速度避免太慢
   
-  max_vel_theta: 0.8 # 降低角速度
-  min_vel_theta: -0.8
-  min_in_place_vel_theta: 0.6 # 降低原地旋转速度
+  max_vel_theta: 1.2    # 提高角速度
+  min_vel_theta: -1.2
+  min_in_place_vel_theta: 1.0  # 提高原地旋转速度
 
-  acc_lim_x: 0.5 # 降低X加速限制，更平滑
-  acc_lim_y: 0.0 # Y 加速限制
-  acc_lim_theta: 0.4 # 降低角加速限制
+  acc_lim_x: 0.8        # 提高加速度响应
+  acc_lim_y: 0.0
+  acc_lim_theta: 0.6    # 提高角加速度
 
-# Goal Tolerance Parameters - 调整目标公差
-  xy_goal_tolerance: 0.15 # 稍微放宽位置容差
-  yaw_goal_tolerance: 0.1 # 稍微放宽角度容差
-  latch_xy_goal_tolerance: true # 锁定位置容差
+# Goal Tolerance Parameters
+  xy_goal_tolerance: 0.15
+  yaw_goal_tolerance: 0.1
+  latch_xy_goal_tolerance: true
 
 # Differential-drive robot configuration
   holonomic_robot: false
 
-# Forward Simulation Parameters - 优化路径规划
-  sim_time: 1.2 # 增加仿真时间
-  vx_samples: 12 # 减少采样数量提高效率
-  vtheta_samples: 16
-  sim_granularity: 0.03 # 降低粒度提高精度
+# Forward Simulation Parameters - 优化响应性
+  sim_time: 1.0         # 减少仿真时间提高响应
+  vx_samples: 10        # 减少采样提高效率
+  vtheta_samples: 12
+  sim_granularity: 0.03
 
-# Trajectory scoring parameters - 优化轨迹评分
-  path_distance_bias: 64.0 # 增加路径跟踪权重
-  goal_distance_bias: 24.0 # 增加目标距离权重
-  occdist_scale: 0.5 # 降低障碍物权重
-  forward_point_distance: 0.325
-  stop_time_buffer: 0.2
-  scaling_speed: 0.25
+# Trajectory scoring parameters
+  path_distance_bias: 64.0
+  goal_distance_bias: 24.0
+  occdist_scale: 0.5
   max_scaling_factor: 0.2
-
-# Oscillation Prevention
-  oscillation_reset_dist: 0.15 # 震荡重置距离
-  escape_reset_dist: 0.15
-  escape_reset_theta: 0.1
