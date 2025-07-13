@@ -4,7 +4,7 @@
     <!-- 基本配置 -->
     <param name="odom_model_type" value="diff"/><!-- 里程计模式为差分 -->
     <param name="gui_publish_rate" value="10.0"/>
-    <param name="laser_max_beams" value="60"/><!-- 增加激光束数量提高精度 -->
+    <param name="laser_max_beams" value="20"/><!-- 增加激光束数量提高精度 -->
     
     <!-- 粒子滤波器参数 - 优化定位稳定性 -->
     <param name="min_particles" value="100"/><!-- 减少最小粒子数以提高效率 -->
