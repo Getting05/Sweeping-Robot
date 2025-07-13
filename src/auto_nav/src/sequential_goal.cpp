@@ -28,7 +28,7 @@ bool goal_published = false;
 
 // 参数
 float tolerance_goal = 0.3;  // 目标容差
-float goal_timeout = 3;   // 目标超时时间(秒) - 增加到10秒
+float goal_timeout = 5;   // 目标超时时间(秒) - 增加到10秒
 ros::Time goal_start_time;
 int consecutive_timeouts = 0;
 int max_consecutive_timeouts = 5;  // 增加容错次数

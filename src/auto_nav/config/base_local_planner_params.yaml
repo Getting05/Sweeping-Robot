@@ -2,15 +2,15 @@ TrajectoryPlannerROS:
 
 # Robot Configuration Parameters - 提高速度
   max_vel_x: 0.8        # 提高X方向最大速度
-  min_vel_x: 0.2        # 提高最小速度避免太慢
+  min_vel_x: 0.3        # 提高最小速度避免太慢
   
   max_vel_theta: 1.2    # 提高角速度
   min_vel_theta: -1.2
   min_in_place_vel_theta: 1.0  # 提高原地旋转速度
 
-  acc_lim_x: 0.8        # 提高加速度响应
+  acc_lim_x: 1       # 提高加速度响应
   acc_lim_y: 0.0
-  acc_lim_theta: 0.6    # 提高角加速度
+  acc_lim_theta: 1    # 提高角加速度
 
 # Goal Tolerance Parameters
   xy_goal_tolerance: 0.15
