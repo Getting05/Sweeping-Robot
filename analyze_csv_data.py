@@ -15,7 +15,7 @@ import sys
 
 def find_latest_csv():
     """查找最新的实时CSV文件"""
-    pattern = "/tmp/sweeping_robot_realtime_data_*.csv"
+    pattern = "/home/getting/tmp/sweeping_robot_realtime_data_*.csv"
     files = glob.glob(pattern)
     
     if not files:
@@ -94,7 +94,7 @@ def analyze_performance_metrics(df):
         else:
             print("△ 碰撞较多，需要优化")
 
-def create_performance_plots(df, output_dir="/tmp"):
+def create_performance_plots(df, output_dir="/home/getting/tmp"):
     """创建性能分析图表"""
     print("\n=== 生成性能图表 ===")
     
@@ -236,7 +236,7 @@ def generate_summary_report(df):
     print(report)
     
     # 保存报告到文件
-    report_filename = f"/tmp/robot_analysis_report_{int(pd.Timestamp.now().timestamp())}.txt"
+    report_filename = f"/home/getting/tmp/robot_analysis_report_{int(pd.Timestamp.now().timestamp())}.txt"
     with open(report_filename, 'w', encoding='utf-8') as f:
         f.write(report)
     

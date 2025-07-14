@@ -67,7 +67,7 @@ def test_csv_feature():
     print("2. 文件格式：CSV格式，便于后续分析")
     print("3. 数据内容：20个核心指标 + 时间戳")
     print("4. 保存模式：追加模式，持续累积数据")
-    print("5. 文件位置：/tmp/sweeping_robot_realtime_data_<timestamp>.csv")
+    print("5. 文件位置：/home/getting/tmp/sweeping_robot_realtime_data_<timestamp>.csv")
     
     print("\n=== CSV字段说明 ===")
     csv_fields = [
@@ -112,10 +112,10 @@ def check_dependencies():
             print(f"✗ {module} - 未安装")
     
     # 检查目录权限
-    if os.access('/tmp', os.W_OK):
-        print("✓ /tmp 目录可写")
+    if os.access('/home/getting/tmp', os.W_OK):
+        print("✓ /home/getting/tmp 目录可写")
     else:
-        print("✗ /tmp 目录不可写")
+        print("✗ /home/getting/tmp 目录不可写")
 
 if __name__ == '__main__':
     print("开始测试...")
@@ -130,7 +130,7 @@ if __name__ == '__main__':
         print("   rosrun auto_nav coverage_monitor.py")
         print("3. 启动清扫任务")
         print("4. 监控CSV文件生成：")
-        print("   watch -n 5 'ls -la /tmp/sweeping_robot_realtime_data_*.csv'")
+        print("   watch -n 5 'ls -la /home/getting/tmp/sweeping_robot_realtime_data_*.csv'")
     else:
         print("\n❌ 功能验证失败！")
         sys.exit(1)

@@ -93,17 +93,17 @@ LAUNCH_COMMAND="roslaunch auto_nav sequential_clean.launch"
 ## 日志和报告
 
 ### 1. 重启报告
-- **位置**: `/tmp/auto_restart_report_<timestamp>.txt`
+- **位置**: `/home/getting/tmp/auto_restart_report_<timestamp>.txt`
 - **内容**: 重启前的完整状态，包括覆盖率、运行时间、性能指标等
 - **格式**: 文本格式，便于阅读
 
 ### 2. 管理器日志
-- **位置**: `/tmp/auto_restart_logs/restart_<N>_<timestamp>.log`
+- **位置**: `/home/getting/tmp/auto_restart_logs/restart_<N>_<timestamp>.log`
 - **内容**: 每次重启的详细过程日志
 - **管理**: 自动创建，按重启次数编号
 
 ### 3. CSV数据文件
-- **位置**: `/tmp/sweeping_robot_realtime_data_<timestamp>.csv`
+- **位置**: `/home/getting/tmp/sweeping_robot_realtime_data_<timestamp>.csv`
 - **说明**: 每次重启会创建新的CSV文件，保持数据连续性
 
 ## 监控界面
@@ -114,16 +114,16 @@ LAUNCH_COMMAND="roslaunch auto_nav sequential_clean.launch"
 watch -n 5 './auto_restart_manager.sh status'
 
 # 监控重启报告
-watch -n 10 'ls -la /tmp/auto_restart_report_*.txt'
+watch -n 10 'ls -la /home/getting/tmp/auto_restart_report_*.txt'
 
 # 监控CSV文件生成
-watch -n 5 'ls -la /tmp/sweeping_robot_realtime_data_*.csv'
+watch -n 5 'ls -la /home/getting/tmp/sweeping_robot_realtime_data_*.csv'
 ```
 
 ### 日志实时查看
 ```bash
 # 查看最新管理器日志
-tail -f /tmp/auto_restart_logs/restart_*.log
+tail -f /home/getting/tmp/auto_restart_logs/restart_*.log
 
 # 查看覆盖监控输出
 rostopic echo /coverage_percentage
@@ -181,7 +181,7 @@ rosnode logs coverage_monitor
 ### 2. 重启次数过多
 ```bash
 # 检查重启报告找出原因
-cat /tmp/auto_restart_report_*.txt
+cat /home/getting/tmp/auto_restart_report_*.txt
 
 # 调整参数减少误触发
 # 增加coverage_stagnation_threshold或减少coverage_change_tolerance

@@ -87,10 +87,10 @@ check_ros_environment() {
 check_permissions() {
     echo -e "${BLUE}检查权限...${NC}"
     
-    if [ -w "/tmp" ]; then
-        print_status "/tmp目录可写，CSV文件将保存到此目录"
+    if [ -w "/home/getting/tmp" ]; then
+        print_status "/home/getting/tmp目录可写，CSV文件将保存到此目录"
     else
-        print_error "/tmp目录不可写"
+        print_error "/home/getting/tmp目录不可写"
         exit 1
     fi
 }
@@ -102,7 +102,7 @@ show_feature_info() {
     echo "2. 包含20个核心评估指标"
     echo "3. 支持追加模式，数据持续累积"
     echo "4. 文件名包含时间戳，避免冲突"
-    echo "5. 保存位置: /tmp/sweeping_robot_realtime_data_<timestamp>.csv"
+    echo "5. 保存位置: /home/getting/tmp/sweeping_robot_realtime_data_<timestamp>.csv"
     echo ""
 }
 
@@ -162,7 +162,7 @@ monitor_csv_files() {
         echo ""
         
         # 查找CSV文件
-        csv_files=($(ls /tmp/sweeping_robot_realtime_data_*.csv 2>/dev/null || true))
+        csv_files=($(ls /home/getting/tmp/sweeping_robot_realtime_data_*.csv 2>/dev/null || true))
         
         if [ ${#csv_files[@]} -eq 0 ]; then
             print_warning "未找到CSV文件，等待生成..."
@@ -193,7 +193,7 @@ start_coverage_monitor() {
     source devel/setup.bash
     
     echo "启动 coverage_monitor.py..."
-    echo "CSV文件将保存到: /tmp/sweeping_robot_realtime_data_<timestamp>.csv"
+    echo "CSV文件将保存到: /home/getting/tmp/sweeping_robot_realtime_data_<timestamp>.csv"
     echo "按 Ctrl+C 停止监控"
     echo ""
     
@@ -212,7 +212,7 @@ start_full_system() {
     
     echo "启动系统组件..."
     echo "地图: $map_name"
-    echo "CSV文件: /tmp/sweeping_robot_realtime_data_<timestamp>.csv"
+    echo "CSV文件: /home/getting/tmp/sweeping_robot_realtime_data_<timestamp>.csv"
     echo ""
     
     # 启动覆盖监控在后台
@@ -239,17 +239,17 @@ show_usage() {
    a) 确保 roscore 正在运行
    b) 启动覆盖监控: rosrun auto_nav coverage_monitor.py
    c) 启动清扫任务: roslaunch auto_nav sequential_clean.launch
-   d) 观察CSV文件生成: ls -la /tmp/sweeping_robot_realtime_data_*.csv
+   d) 观察CSV文件生成: ls -la /home/getting/tmp/sweeping_robot_realtime_data_*.csv
 
 2. 手动命令:
    # 启动监控
    rosrun auto_nav coverage_monitor.py
    
    # 监控CSV生成
-   watch -n 5 'ls -la /tmp/sweeping_robot_realtime_data_*.csv'
+   watch -n 5 'ls -la /home/getting/tmp/sweeping_robot_realtime_data_*.csv'
    
    # 查看实时数据
-   tail -f /tmp/sweeping_robot_realtime_data_*.csv
+   tail -f /home/getting/tmp/sweeping_robot_realtime_data_*.csv
 
 3. 数据分析:
    # Python分析 (需要pandas)
@@ -260,7 +260,7 @@ show_usage() {
 
 4. 注意事项:
    - CSV文件每30秒保存一次
-   - 文件保存在/tmp目录，重启后会清空
+   - 文件保存在/home/getting/tmp目录，重启后会清空
    - 支持多个任务同时运行，文件名不冲突
    - 不影响原有的最终报告功能
 

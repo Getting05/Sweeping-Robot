@@ -38,7 +38,7 @@
 | 20 | Goal_Progress_Rate | 目标完成率 | % |
 
 ### 3. 文件管理
-- **文件位置**: `/tmp/sweeping_robot_realtime_data_<timestamp>.csv`
+- **文件位置**: `/home/getting/tmp/sweeping_robot_realtime_data_<timestamp>.csv`
 - **文件命名**: 包含启动时间戳，避免文件冲突
 - **数据持久化**: 程序结束后CSV文件保留，可用于后续分析
 
@@ -59,10 +59,10 @@ roslaunch auto_nav sequential_clean.launch map_name:=hospital_0.1
 ### 实时监控CSV文件生成
 ```bash
 # 查看CSV文件
-watch -n 5 'ls -la /tmp/sweeping_robot_realtime_data_*.csv'
+watch -n 5 'ls -la /home/getting/tmp/sweeping_robot_realtime_data_*.csv'
 
 # 实时查看CSV内容
-tail -f /tmp/sweeping_robot_realtime_data_*.csv
+tail -f /home/getting/tmp/sweeping_robot_realtime_data_*.csv
 ```
 
 ## 数据分析示例
@@ -73,7 +73,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # 读取CSV数据
-df = pd.read_csv('/tmp/sweeping_robot_realtime_data_<timestamp>.csv')
+df = pd.read_csv('/home/getting/tmp/sweeping_robot_realtime_data_<timestamp>.csv')
 
 # 绘制覆盖率变化图
 plt.figure(figsize=(12, 8))
@@ -134,7 +134,7 @@ plt.show()
 Robot cleaning radius: 0.15 meters
 Update rate: 2.0 Hz
 Auto CSV save interval: 30 seconds
-Realtime CSV file: /tmp/sweeping_robot_realtime_data_1673567890.csv
+Realtime CSV file: /home/getting/tmp/sweeping_robot_realtime_data_1673567890.csv
 ```
 
 每次保存CSV时会输出：
@@ -145,16 +145,16 @@ Realtime CSV file: /tmp/sweeping_robot_realtime_data_1673567890.csv
 ## 注意事项
 
 1. **文件大小**: 每30秒一行数据，长时间运行会积累较多数据
-2. **存储位置**: 默认保存在/tmp目录，重启后会清空
+2. **存储位置**: 默认保存在/home/getting/tmp目录，重启后会清空
 3. **性能影响**: CSV保存操作很轻量，不影响实时性能
 4. **并发安全**: 支持多个任务同时运行，文件名不冲突
 
 ## 故障排除
 
 ### 常见问题
-1. **CSV文件未生成**: 检查/tmp目录权限
+1. **CSV文件未生成**: 检查/home/getting/tmp目录权限
 2. **数据不连续**: 检查ROS话题是否正常发布
-3. **文件过大**: 可以定期清理/tmp目录中的旧文件
+3. **文件过大**: 可以定期清理/home/getting/tmp目录中的旧文件
 
 ### 调试命令
 ```bash
@@ -165,7 +165,7 @@ rosnode info /coverage_monitor
 rostopic echo /coverage_percentage
 
 # 检查CSV文件
-ls -la /tmp/sweeping_robot_realtime_data_*.csv
+ls -la /home/getting/tmp/sweeping_robot_realtime_data_*.csv
 ```
 
 ## 后续扩展

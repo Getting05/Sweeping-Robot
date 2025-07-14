@@ -128,8 +128,8 @@ def simulate_stagnation_test():
     print("7. 重复监控过程")
     
     print("\n预期结果:")
-    print("- 生成重启报告: /tmp/auto_restart_report_<timestamp>.txt")
-    print("- 重启日志: /tmp/auto_restart_logs/restart_*.log")
+    print("- 生成重启报告: /home/getting/tmp/auto_restart_report_<timestamp>.txt")
+    print("- 重启日志: /home/getting/tmp/auto_restart_logs/restart_*.log")
     print("- 新的CSV数据文件继续记录")
     print("- 清扫任务从头开始执行")
 
@@ -146,7 +146,7 @@ def check_dependencies():
             print(f"✗ {cmd} - 未找到")
     
     # 检查目录权限
-    dirs = ['/tmp']
+    dirs = ['/home/getting/tmp']
     for dir_path in dirs:
         if os.access(dir_path, os.W_OK):
             print(f"✓ {dir_path} 可写")

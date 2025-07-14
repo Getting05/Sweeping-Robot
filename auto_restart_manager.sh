@@ -15,7 +15,7 @@ NC='\033[0m' # No Color
 # 配置参数
 PROJECT_ROOT="/home/getting/Sweeping-Robot"
 LAUNCH_COMMAND="roslaunch auto_nav sequential_clean.launch"
-LOG_DIR="/tmp/auto_restart_logs"
+LOG_DIR="/home/getting/tmp/auto_restart_logs"
 MAX_RESTART_COUNT=50  # 最大重启次数
 RESTART_DELAY=10      # 重启间隔秒数
 
@@ -129,7 +129,7 @@ monitor_system() {
         running_time=$((current_time - start_time))
         
         # 检查是否有自动重启报告生成
-        restart_reports=($(find /tmp -name "auto_restart_report_*.txt" -newer /tmp/monitor_start_time 2>/dev/null || true))
+        restart_reports=($(find /home/getting/tmp -name "auto_restart_report_*.txt" -newer /home/getting/tmp/monitor_start_time 2>/dev/null || true))
         
         if [ ${#restart_reports[@]} -gt 0 ]; then
             # 发现有重启报告，说明coverage_monitor触发了重启
@@ -146,7 +146,7 @@ monitor_system() {
             handle_auto_restart
             
             # 清理重启报告标记
-            touch /tmp/monitor_start_time
+            touch /home/getting/tmp/monitor_start_time
         fi
         
         # 检查清扫进程是否还在运行
@@ -218,7 +218,7 @@ cleanup_and_exit() {
 $(find "$LOG_DIR" -name "restart_*.log" -exec basename {} \; | sort)
 
 自动重启报告:
-$(find /tmp -name "auto_restart_report_*.txt" -exec basename {} \; | sort)
+$(find /home/getting/tmp -name "auto_restart_report_*.txt" -exec basename {} \; | sort)
 ============================
 EOF
     
@@ -236,7 +236,7 @@ main() {
     print_info "重启间隔: ${RESTART_DELAY}s"
     
     # 创建监控起始时间标记
-    touch /tmp/monitor_start_time
+    touch /home/getting/tmp/monitor_start_time
     
     # 设置信号处理
     trap cleanup_and_exit SIGTERM SIGINT

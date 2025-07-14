@@ -146,7 +146,7 @@ smart_start() {
     fi
     
     # 修改自动重启管理器的启动命令以包含地图参数
-    local temp_manager="/tmp/auto_restart_manager_temp.sh"
+    local temp_manager="/home/getting/tmp/auto_restart_manager_temp.sh"
     sed "s|sequential_clean.launch|sequential_clean.launch map_name:=$map_name|g" \
         "$PROJECT_ROOT/auto_restart_manager.sh" > "$temp_manager"
     chmod +x "$temp_manager"
@@ -173,7 +173,7 @@ start_coverage_only() {
     source devel/setup.bash
     
     print_info "启动覆盖率监控 (包含CSV记录和自动重启功能)..."
-    print_info "CSV文件位置: /tmp/sweeping_robot_realtime_data_*.csv"
+    print_info "CSV文件位置: /home/getting/tmp/sweeping_robot_realtime_data_*.csv"
     print_info "按 Ctrl+C 停止监控"
     
     rosrun auto_nav coverage_monitor.py
@@ -191,7 +191,7 @@ test_auto_restart() {
         print_warning "将启动测试模式，覆盖率阈值设为30秒以便快速测试"
         
         # 创建测试配置的临时监控脚本
-        local temp_monitor="/tmp/coverage_monitor_test.py"
+        local temp_monitor="/home/getting/tmp/coverage_monitor_test.py"
         sed 's/coverage_stagnation_threshold = 120.0/coverage_stagnation_threshold = 30.0/g' \
             "$PROJECT_ROOT/src/auto_nav/scripts/coverage_monitor.py" > "$temp_monitor"
         
@@ -234,9 +234,9 @@ data_analysis() {
                 ;;
             3)
                 print_info "重启报告列表:"
-                ls -la /tmp/auto_restart_report_*.txt 2>/dev/null || print_warning "无重启报告"
+                ls -la /home/getting/tmp/auto_restart_report_*.txt 2>/dev/null || print_warning "无重启报告"
                 
-                reports=($(ls /tmp/auto_restart_report_*.txt 2>/dev/null || true))
+                reports=($(ls /home/getting/tmp/auto_restart_report_*.txt 2>/dev/null || true))
                 if [ ${#reports[@]} -gt 0 ]; then
                     echo ""
                     read -p "查看最新报告? [Y/n]: " view_report
@@ -259,8 +259,8 @@ plt.ylabel('覆盖率(%)')
 plt.title('扫地机器人覆盖率变化')
 plt.legend()
 plt.grid(True)
-plt.savefig('/tmp/performance_chart.png', dpi=150)
-print('图表已保存: /tmp/performance_chart.png')
+plt.savefig('/home/getting/tmp/performance_chart.png', dpi=150)
+print('图表已保存: /home/getting/tmp/performance_chart.png')
 plt.show()
 "
                 else
@@ -269,7 +269,7 @@ plt.show()
                 ;;
             5)
                 print_info "生成分析报告..."
-                local report_file="/tmp/system_analysis_$(date +%Y%m%d_%H%M%S).txt"
+                local report_file="/home/getting/tmp/system_analysis_$(date +%Y%m%d_%H%M%S).txt"
                 cat > "$report_file" << EOF
 === 扫地机器人系统分析报告 ===
 生成时间: $(date)
@@ -283,9 +283,9 @@ plt.show()
 ✓ 性能评估报告
 
 === 文件统计 ===
-CSV文件数: $(ls /tmp/sweeping_robot_realtime_data_*.csv 2>/dev/null | wc -l)
-重启报告数: $(ls /tmp/auto_restart_report_*.txt 2>/dev/null | wc -l)
-日志文件数: $(ls /tmp/auto_restart_logs/*.log 2>/dev/null | wc -l || echo 0)
+CSV文件数: $(ls /home/getting/tmp/sweeping_robot_realtime_data_*.csv 2>/dev/null | wc -l)
+重启报告数: $(ls /home/getting/tmp/auto_restart_report_*.txt 2>/dev/null | wc -l)
+日志文件数: $(ls /home/getting/tmp/auto_restart_logs/*.log 2>/dev/null | wc -l || echo 0)
 
 === 系统状态 ===
 ROS环境: ${ROS_DISTRO:-未设置}
@@ -343,9 +343,9 @@ system_management() {
                 ;;
             3)
                 print_info "清理临时文件..."
-                rm -f /tmp/sweeping_robot_realtime_data_*.csv
-                rm -f /tmp/auto_restart_report_*.txt
-                rm -rf /tmp/auto_restart_logs/
+                rm -f /home/getting/tmp/sweeping_robot_realtime_data_*.csv
+                rm -f /home/getting/tmp/auto_restart_report_*.txt
+                rm -rf /home/getting/tmp/auto_restart_logs/
                 print_status "临时文件已清理"
                 ;;
             4)
@@ -360,9 +360,9 @@ system_management() {
                         rosnode logs coverage_monitor 2>/dev/null || print_warning "无coverage_monitor日志"
                         ;;
                     2)
-                        if [ -d "/tmp/auto_restart_logs" ]; then
-                            ls -la /tmp/auto_restart_logs/
-                            latest_log=$(find /tmp/auto_restart_logs -name "*.log" -type f -printf '%T@ %p\n' | sort -n | tail -1 | cut -d' ' -f2-)
+                        if [ -d "/home/getting/tmp/auto_restart_logs" ]; then
+                            ls -la /home/getting/tmp/auto_restart_logs/
+                            latest_log=$(find /home/getting/tmp/auto_restart_logs -name "*.log" -type f -printf '%T@ %p\n' | sort -n | tail -1 | cut -d' ' -f2-)
                             if [ -n "$latest_log" ]; then
                                 print_info "最新日志: $latest_log"
                                 tail -20 "$latest_log"
@@ -416,9 +416,9 @@ show_usage() {
 • 完整的性能评估报告
 
 🔧 文件位置:
-• CSV数据: /tmp/sweeping_robot_realtime_data_*.csv
-• 重启报告: /tmp/auto_restart_report_*.txt
-• 运行日志: /tmp/auto_restart_logs/
+• CSV数据: /home/getting/tmp/sweeping_robot_realtime_data_*.csv
+• 重启报告: /home/getting/tmp/auto_restart_report_*.txt
+• 运行日志: /home/getting/tmp/auto_restart_logs/
 
 📖 详细文档:
 • AUTO_RESTART_GUIDE.md - 自动重启功能指南

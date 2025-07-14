@@ -71,8 +71,8 @@ Jerk_avg (平均加加速度): 0.023 m/s³
 ```
 
 ### 最终报告文件
-- **文本报告**: `/tmp/sweeping_robot_report_*.txt`
-- **CSV数据**: `/tmp/sweeping_robot_metrics_*.csv`
+- **文本报告**: `/home/getting/tmp/sweeping_robot_report_*.txt`
+- **CSV数据**: `/home/getting/tmp/sweeping_robot_metrics_*.csv`
 
 ### CSV格式示例
 ```csv

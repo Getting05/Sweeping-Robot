@@ -22,7 +22,7 @@
    - 持续监控循环
 
 3. **安全保护机制**
-   - 最大重启次数限制 (50次)
+   - 最大重启次数限制 (500次)
    - 重启间隔控制 (60秒)
    - 详细日志记录
    - 手动停止功能
@@ -99,9 +99,9 @@ catkin_make                         # ✅ 成功编译
 ## 📂 生成的文件
 
 ### 运行时文件：
-- `/tmp/sweeping_robot_realtime_data_*.csv` - 实时CSV数据
-- `/tmp/auto_restart_report_*.txt` - 重启状态报告
-- `/tmp/auto_restart_logs/` - 详细运行日志
+- `/home/getting/tmp/sweeping_robot_realtime_data_*.csv` - 实时CSV数据
+- `/home/getting/tmp/auto_restart_report_*.txt` - 重启状态报告
+- `/home/getting/tmp/auto_restart_logs/` - 详细运行日志
 
 ### 配置和工具文件：
 - `auto_restart_manager.sh` - 自动重启管理器

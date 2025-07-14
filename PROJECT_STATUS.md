@@ -142,7 +142,7 @@ geometry_msgs::PoseStamped map_pose;
 
 ### CSV功能特性
 - **自动保存间隔**: 30秒（可配置）
-- **文件位置**: `/tmp/sweeping_robot_realtime_data_<timestamp>.csv`
+- **文件位置**: `/home/getting/tmp/sweeping_robot_realtime_data_<timestamp>.csv`
 - **保存模式**: 追加模式，数据持续累积
 - **数据完整性**: 包含表头，便于Excel等工具分析
 - **并发安全**: 支持多任务运行，文件名时间戳避免冲突
