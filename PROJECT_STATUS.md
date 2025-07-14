@@ -2,32 +2,52 @@
 
 ## 📊 项目概要
 
-**项目名称**: 基于ROS的移动扫地机器人实时覆盖率监控系统  
+**项目名称**: 基于ROS的移动扫地机器人实时覆盖率监控与评估系统  
 **完成日期**: 2025年7月14日  
-**开发状态**: ✅ **生产就绪** - 所有核心功能已实现并测试通过
+**开发状态**: ✅ **生产就绪** - 所有核心功能已实现并测试通过  
+**最新版本**: v2.1 - 新增实时CSV数据保存功能
 
 ## 🎯 项目目标
-实现一个实时监控机器人清扫覆盖率的脚本（覆盖率=机器人驶过的面积/自由区域面积），并确保RViz中红线（已清扫路径）完整保留历史轨迹不被刷新。
+1. 实现实时覆盖率监控（覆盖率=机器人清扫面积/自由区域面积）
+2. 支持自动终止条件（99%覆盖率、30秒无进展、到达最后目标点）  
+3. 解决机器人"瞬移乱飘"现象，修复ROS通信和坐标变换问题
+4. 实现地图批量切换与参数化管理工具
+5. **新增**：每30秒自动保存评估数据到CSV，持续追加记录
 
 ## ✅ 已完成功能
 
 ### 1. 核心覆盖率监控系统
 - ✅ **实时覆盖率计算**：基于路径点和覆盖半径计算已覆盖面积
-- ✅ **覆盖率发布**：通过`/coverage_percentage`话题实时发布百分比
+- ✅ **多项评估指标**：覆盖率、运动效率、冗余度、碰撞、计算时间等
+- ✅ **覆盖率发布**：通过`/coverage_percentage`话题实时发布
 - ✅ **栅格地图可视化**：发布`/covered_area_grid`供RViz显示
-- ✅ **统计信息输出**：实时显示路径长度、覆盖面积、效率等指标
+- ✅ **自动终止机制**：支持99%覆盖率、30秒无进展、到达最后目标点自动退出
 
-### 2. 历史轨迹保持系统
+### 2. **新增** 实时CSV数据保存系统 v2.1
+- ✅ **定时自动保存**：每30秒自动保存一次评估数据
+- ✅ **20个核心指标**：包含覆盖率、运动效率、冗余度、速度、加速度等
+- ✅ **追加模式**：数据持续累积到同一CSV文件，不覆盖历史数据
+- ✅ **时间戳标识**：文件名包含启动时间，避免冲突
+- ✅ **便于分析**：CSV格式便于Excel、Python等工具后续分析
+- ✅ **不影响原功能**：保持所有原有功能不变，仅增加数据记录
+
+### 3. 历史轨迹保持系统
 - ✅ **红线永久保留**：已清扫路径历史轨迹完整保存，不被重置
 - ✅ **坐标系统一**：所有导航和可视化统一使用map坐标系
 - ✅ **路径累积策略**：只在首次接收时清空，后续累积所有历史点
 - ✅ **漂移问题修复**：解决TF坐标系混用和时间戳问题
 
-### 3. 系统鲁棒性优化
-- ✅ **导航参数优化**：调整局部规划器和定位参数
+### 4. 系统鲁棒性优化
+- ✅ **导航参数优化**：调整AMCL、局部规划器参数，解决跳跃问题
 - ✅ **错误处理机制**：完善的异常处理和错误恢复
-- ✅ **性能优化**：合理的发布频率和内存管理
-- ✅ **多模式支持**：仿真、真实机器人、纯可视化模式
+- ✅ **数组越界修复**：修复next_goal.cpp和sequential_goal.cpp的索引越界
+- ✅ **TF时间戳修复**：统一时间戳和frame_id，解决坐标变换问题
+
+### 5. **新增** 地图批量管理系统
+- ✅ **地图参数化**：launch文件支持map_name参数一键切换
+- ✅ **批量替换工具**：parameterize_launch.sh支持批量修改launch文件
+- ✅ **地图管理脚本**：map_manager.sh提供交互式地图管理功能
+- ✅ **备份恢复**：支持地图文件备份、验证、恢复等操作
 
 ## 📁 文件结构
 
@@ -35,17 +55,32 @@
 ```
 src/auto_nav/
 ├── src/
-│   └── sequential_goal.cpp           # 重构的导航和路径发布节点
+│   ├── sequential_goal.cpp           # 修复的导航和路径发布节点
+│   ├── next_goal.cpp                 # 修复的目标点导航节点
+│   └── path_planning_node.cpp        # 路径规划节点
 ├── scripts/
-│   ├── coverage_monitor.py           # 覆盖率监控主脚本 [NEW]
-│   ├── test_coverage_monitor.py      # 覆盖率监控测试脚本 [NEW]
-│   └── system_test.py               # 系统完整性测试脚本 [NEW]
+│   ├── coverage_monitor.py           # 覆盖率监控主脚本 v2.1 [UPDATED]
+│   ├── test_coverage_monitor.py      # 覆盖率监控测试脚本
+│   └── system_test.py               # 系统完整性测试脚本
 ├── launch/
-│   ├── sequential_clean_with_coverage.launch     # 仿真模式启动文件 [NEW]
-│   ├── sequential_clean_with_coverage_viz.launch # 可视化模式启动文件 [NEW]
-│   └── amcl.launch                   # 优化的定位启动文件
-└── config/
-    └── base_local_planner_params.yaml # 优化的导航参数
+│   ├── sequential_clean.launch       # 参数化的清扫启动文件 [UPDATED]
+│   ├── clean_work_sequential.launch  # 参数化的工作启动文件 [UPDATED]
+│   └── move.launch                   # 参数化的移动启动文件 [UPDATED]
+└── map/
+    ├── hospital_0.1.yaml            # 修正拼写的地图文件 [FIXED]
+    └── hospital_0.1.pgm             # 地图图像文件
+```
+
+### **新增** 管理和测试工具
+```
+根目录/
+├── test_csv_monitor.sh              # CSV功能测试和启动脚本 [NEW]
+├── analyze_csv_data.py              # CSV数据分析脚本 [NEW]
+├── map_manager.sh                   # 交互式地图管理脚本 [NEW]
+├── parameterize_launch.sh           # launch文件参数化脚本 [NEW]
+├── switch_map.sh                    # 地图快速切换脚本 [NEW]
+├── CSV_FEATURE_GUIDE.md             # CSV功能使用指南 [NEW]
+└── test_csv_feature.py              # CSV功能验证脚本 [NEW]
 ```
 
 ### 用户工具
@@ -61,6 +96,45 @@ src/auto_nav/
 ### 1. 坐标系统一化
 ```cpp
 // sequential_goal.cpp中的关键改进
+geometry_msgs::PoseStamped map_pose;
+## 💾 **新功能** CSV实时数据保存详情
+
+### CSV数据字段说明 (20个核心指标)
+| 序号 | 字段名 | 说明 | 单位 | 应用价值 |
+|------|--------|------|------|----------|
+| 1 | Timestamp | 保存时间戳 | - | 时间序列分析 |
+| 2 | Runtime_s | 运行时间 | 秒 | 效率评估 |
+| 3 | Runtime_min | 运行时间 | 分钟 | 任务进度 |
+| 4 | Coverage_Rate | 覆盖率 | 0-1 | 核心指标 |
+| 5 | Motion_Efficiency | 运动效率 | m/m² | 路径优化 |
+| 6 | Redundancy | 冗余度 | 0-1 | 重复清扫评估 |
+| 7 | Collision_Count | 碰撞次数 | 次 | 安全性评估 |
+| 8 | Avg_Computation_Time | 平均计算时间 | 秒 | 算法性能 |
+| 9 | Total_Time | 总耗时 | 秒 | 总体效率 |
+| 10 | Avg_Velocity | 平均速度 | m/s | 运动学分析 |
+| 11 | Avg_Acceleration | 平均加速度 | m/s² | 运动平滑度 |
+| 12 | Avg_Jerk | 平均加加速度 | m/s³ | 运动舒适度 |
+| 13 | Planned_Points | 规划路径点数 | 个 | 规划复杂度 |
+| 14 | Path_Length | 路径长度 | 米 | 移动效率 |
+| 15 | Covered_Area | 已覆盖面积 | m² | 清扫效果 |
+| 16 | Redundant_Area | 重复面积 | m² | 冗余分析 |
+| 17 | Free_Area_Total | 总自由面积 | m² | 环境复杂度 |
+| 18 | Path_Points_Count | 路径点数量 | 个 | 轨迹密度 |
+| 19 | Completed_Goals | 完成目标数 | 个 | 任务进度 |
+| 20 | Goal_Progress_Rate | 目标完成率 | % | 完成度评估 |
+
+### CSV功能特性
+- **自动保存间隔**: 30秒（可配置）
+- **文件位置**: `/tmp/sweeping_robot_realtime_data_<timestamp>.csv`
+- **保存模式**: 追加模式，数据持续累积
+- **数据完整性**: 包含表头，便于Excel等工具分析
+- **并发安全**: 支持多任务运行，文件名时间戳避免冲突
+
+## 🔧 核心技术实现
+
+### 1. 统一坐标系和时间戳
+```cpp
+// sequential_goal.cpp中修复的坐标系设置
 geometry_msgs::PoseStamped map_pose;
 map_pose.header.frame_id = "map";
 map_pose.header.stamp = ros::Time::now();
@@ -96,21 +170,59 @@ def calculate_coverage_area(self, path_points):
     return len(coverage_cells) * self.map_resolution ** 2
 ```
 
+### 4. **新增** 实时CSV数据保存
+```python
+# coverage_monitor.py v2.1中的CSV保存功能
+def save_realtime_csv_data(self, elapsed_time):
+    """每30秒自动保存评估数据到CSV"""
+    metrics = self.calculate_evaluation_metrics(elapsed_time)
+    
+    # 追加模式写入数据
+    with open(self.csv_filename, 'a', encoding='utf-8') as f:
+        timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+        data = [timestamp, elapsed_time, metrics['CR'], ...]
+        f.write(",".join(data) + "\n")
+```
+
 ## 🚀 使用方法
 
-### 快速启动
+### 快速启动 - 基础功能
 ```bash
 # 进入工作空间
 cd /home/getting/Sweeping-Robot
 
-# 仿真模式（推荐首次测试）
-./start_coverage_system.sh sim
+# 启动覆盖监控
+rosrun auto_nav coverage_monitor.py
 
-# 真实机器人模式
-./start_coverage_system.sh real
+# 启动清扫任务
+roslaunch auto_nav sequential_clean.launch map_name:=hospital_0.1
+```
 
-# 系统测试
-./start_coverage_system.sh test
+### **新增** 快速启动 - CSV功能测试
+```bash
+# 使用新的测试脚本（推荐）
+./test_csv_monitor.sh
+
+# 或单独启动监控
+./test_csv_monitor.sh monitor
+
+# 或启动完整系统
+./test_csv_monitor.sh full
+
+# 实时监控CSV文件生成
+./test_csv_monitor.sh watch
+```
+
+### **新增** 地图管理功能
+```bash
+# 交互式地图管理
+./map_manager.sh
+
+# 快速切换地图
+./switch_map.sh hospital_0.1
+
+# 批量参数化launch文件
+./parameterize_launch.sh
 ```
 
 ### 监控覆盖率

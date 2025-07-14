@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 
 """
-实时覆盖率监控脚本 v2.0
+实时覆盖率监控脚本 v2.1
 监控机器人清扫覆盖率 = 已清扫面积 / 自由区域总面积
 支持完整的路径历史保存和实时覆盖率计算
+新增功能：每30秒自动保存一次评估数据到CSV文件（追加模式）
 """
 
 import rospy
@@ -69,6 +70,12 @@ class CoverageMonitor:
         self.computation_times = []
         self.last_computation_start = None
         
+        # 定时CSV保存相关
+        self.csv_save_interval = 30.0  # 30秒自动保存一次
+        self.last_csv_save_time = time.time()
+        self.csv_filename = f"/tmp/sweeping_robot_realtime_data_{int(time.time())}.csv"
+        self.csv_initialized = False
+        
         # 订阅器
         self.map_sub = rospy.Subscriber('/map', OccupancyGrid, self.map_callback, queue_size=1)
         self.path_sub = rospy.Subscriber('/passedPath', Path, self.path_callback, queue_size=1)
@@ -82,9 +89,11 @@ class CoverageMonitor:
         # 定时器
         self.timer = rospy.Timer(rospy.Duration(1.0/self.update_rate), self.update_coverage)
         
-        rospy.loginfo("=== Coverage Monitor v2.0 Started ===")
+        rospy.loginfo("=== Coverage Monitor v2.1 Started ===")
         rospy.loginfo("Robot cleaning radius: %.2f meters", self.robot_radius)
         rospy.loginfo("Update rate: %.1f Hz", self.update_rate)
+        rospy.loginfo("Auto CSV save interval: %.0f seconds", self.csv_save_interval)
+        rospy.loginfo("Realtime CSV file: %s", self.csv_filename)
     
     def map_callback(self, msg):
         """处理地图数据"""
@@ -256,6 +265,9 @@ class CoverageMonitor:
             # 打印统计信息
             self.print_statistics(elapsed_time)
             
+            # 检查是否需要定时保存CSV数据
+            self.check_and_save_csv_data(elapsed_time)
+            
         except Exception as e:
             rospy.logerr("Error updating coverage: %s", str(e))
     
@@ -402,6 +414,7 @@ Jerk_avg (平均加加速度): {metrics['Jerk_avg']:.3f} m/s³
             
             rospy.loginfo("最终报告已保存: %s", filename)
             rospy.loginfo("评估指标CSV已保存: %s", csv_filename)
+            rospy.loginfo("实时数据CSV文件: %s", self.csv_filename)
             print(report)  # 同时打印到控制台
             
         except Exception as e:
@@ -465,6 +478,70 @@ Jerk_avg (平均加加速度): {metrics['Jerk_avg']:.3f} m/s³
             computation_time = time.time() - self.last_computation_start
             self.computation_times.append(computation_time)
             self.last_computation_start = None
+
+    def check_and_save_csv_data(self, elapsed_time):
+        """检查并执行定时CSV数据保存"""
+        current_time = time.time()
+        
+        # 检查是否到达保存间隔
+        if current_time - self.last_csv_save_time >= self.csv_save_interval:
+            self.save_realtime_csv_data(elapsed_time)
+            self.last_csv_save_time = current_time
+    
+    def save_realtime_csv_data(self, elapsed_time):
+        """保存实时评估数据到CSV（追加模式）"""
+        try:
+            # 计算当前所有指标
+            metrics = self.calculate_evaluation_metrics(elapsed_time)
+            
+            # 如果CSV文件未初始化，先写入表头
+            if not self.csv_initialized:
+                with open(self.csv_filename, 'w', encoding='utf-8') as f:
+                    headers = [
+                        "Timestamp", "Runtime_s", "Runtime_min", "Coverage_Rate", "Motion_Efficiency",
+                        "Redundancy", "Collision_Count", "Avg_Computation_Time", "Total_Time",
+                        "Avg_Velocity", "Avg_Acceleration", "Avg_Jerk", "Planned_Points",
+                        "Path_Length", "Covered_Area", "Redundant_Area", "Free_Area_Total",
+                        "Path_Points_Count", "Completed_Goals", "Goal_Progress_Rate"
+                    ]
+                    f.write(",".join(headers) + "\n")
+                self.csv_initialized = True
+                rospy.loginfo("创建实时CSV文件: %s", self.csv_filename)
+            
+            # 追加当前数据
+            with open(self.csv_filename, 'a', encoding='utf-8') as f:
+                timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+                goal_progress = (self.completed_goals / self.total_goals * 100) if self.total_goals > 0 else 0
+                
+                data = [
+                    timestamp,                          # 时间戳
+                    f"{elapsed_time:.1f}",             # 运行时间(秒)
+                    f"{elapsed_time/60:.2f}",          # 运行时间(分钟)
+                    f"{metrics['CR']:.4f}",            # 覆盖率
+                    f"{metrics['ME']:.4f}",            # 运动效率
+                    f"{metrics['SR']:.4f}",            # 冗余度
+                    f"{metrics['Collision']}",         # 碰撞次数
+                    f"{metrics['CT']:.4f}",            # 平均计算时间
+                    f"{metrics['FT']:.1f}",            # 总时间
+                    f"{metrics['Vel_avg']:.4f}",       # 平均速度
+                    f"{metrics['Acc_avg']:.4f}",       # 平均加速度
+                    f"{metrics['Jerk_avg']:.4f}",      # 平均加加速度
+                    f"{metrics['Planned_Points']}",    # 规划路径点数
+                    f"{self.path_length:.2f}",         # 路径长度
+                    f"{self.covered_area:.2f}",        # 已覆盖面积
+                    f"{self.redundant_area:.2f}",      # 重复面积
+                    f"{self.free_area_total:.2f}",     # 总自由面积
+                    f"{len(self.path_history)}",       # 路径点数量
+                    f"{self.completed_goals}",         # 完成目标数
+                    f"{goal_progress:.2f}"             # 目标完成率
+                ]
+                f.write(",".join(data) + "\n")
+            
+            rospy.loginfo("已保存实时数据到CSV (运行时间: %.1f s, 覆盖率: %.2f%%)", 
+                         elapsed_time, self.coverage_percentage)
+            
+        except Exception as e:
+            rospy.logerr("保存实时CSV数据错误: %s", str(e))
 
     def calculate_evaluation_metrics(self, elapsed_time):
         """计算所有评估指标"""
