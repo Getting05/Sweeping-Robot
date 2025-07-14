@@ -2,10 +2,11 @@
 # -*- coding: utf-8 -*-
 
 """
-实时覆盖率监控脚本 v2.1
+实时覆盖率监控脚本 v2.2
 监控机器人清扫覆盖率 = 已清扫面积 / 自由区域总面积
 支持完整的路径历史保存和实时覆盖率计算
-新增功能：每30秒自动保存一次评估数据到CSV文件（追加模式）
+v2.1 新增功能：每30秒自动保存一次评估数据到CSV文件（追加模式）
+v2.2 新增功能：覆盖率2分钟无变化时自动重启清扫任务
 """
 
 import rospy
@@ -76,6 +77,14 @@ class CoverageMonitor:
         self.csv_filename = f"/tmp/sweeping_robot_realtime_data_{int(time.time())}.csv"
         self.csv_initialized = False
         
+        # 覆盖率停滞检测和自动重启相关
+        self.coverage_stagnation_threshold = 120.0  # 2分钟无变化阈值
+        self.last_coverage_change_time = time.time()
+        self.last_recorded_coverage = 0.0
+        self.coverage_change_tolerance = 0.001  # 覆盖率变化最小阈值 (0.1%)
+        self.auto_restart_enabled = True  # 是否启用自动重启
+        self.restart_command = "roslaunch auto_nav sequential_clean.launch"
+        
         # 订阅器
         self.map_sub = rospy.Subscriber('/map', OccupancyGrid, self.map_callback, queue_size=1)
         self.path_sub = rospy.Subscriber('/passedPath', Path, self.path_callback, queue_size=1)
@@ -89,10 +98,12 @@ class CoverageMonitor:
         # 定时器
         self.timer = rospy.Timer(rospy.Duration(1.0/self.update_rate), self.update_coverage)
         
-        rospy.loginfo("=== Coverage Monitor v2.1 Started ===")
+        rospy.loginfo("=== Coverage Monitor v2.2 Started ===")
         rospy.loginfo("Robot cleaning radius: %.2f meters", self.robot_radius)
         rospy.loginfo("Update rate: %.1f Hz", self.update_rate)
         rospy.loginfo("Auto CSV save interval: %.0f seconds", self.csv_save_interval)
+        rospy.loginfo("Coverage stagnation threshold: %.0f seconds", self.coverage_stagnation_threshold)
+        rospy.loginfo("Auto restart enabled: %s", self.auto_restart_enabled)
         rospy.loginfo("Realtime CSV file: %s", self.csv_filename)
     
     def map_callback(self, msg):
@@ -267,6 +278,9 @@ class CoverageMonitor:
             
             # 检查是否需要定时保存CSV数据
             self.check_and_save_csv_data(elapsed_time)
+            
+            # 检查覆盖率停滞并处理自动重启
+            self.check_coverage_stagnation(elapsed_time)
             
         except Exception as e:
             rospy.logerr("Error updating coverage: %s", str(e))
@@ -542,6 +556,175 @@ Jerk_avg (平均加加速度): {metrics['Jerk_avg']:.3f} m/s³
             
         except Exception as e:
             rospy.logerr("保存实时CSV数据错误: %s", str(e))
+
+    def check_coverage_stagnation(self, elapsed_time):
+        """检查覆盖率是否停滞，如停滞超过阈值则触发自动重启"""
+        if not self.auto_restart_enabled:
+            return
+            
+        current_time = time.time()
+        current_coverage = self.coverage_percentage / 100.0  # 转换为0-1范围
+        
+        # 检查覆盖率是否有显著变化
+        coverage_change = abs(current_coverage - self.last_recorded_coverage)
+        
+        if coverage_change >= self.coverage_change_tolerance:
+            # 覆盖率有显著变化，更新记录
+            self.last_recorded_coverage = current_coverage
+            self.last_coverage_change_time = current_time
+            rospy.loginfo_throttle(30, "覆盖率正常变化: %.3f%% (变化量: %.3f%%)", 
+                                 current_coverage * 100, coverage_change * 100)
+        else:
+            # 覆盖率无显著变化，检查是否超过停滞阈值
+            stagnation_duration = current_time - self.last_coverage_change_time
+            
+            if stagnation_duration >= self.coverage_stagnation_threshold:
+                rospy.logwarn("检测到覆盖率停滞 %.1f 秒 (阈值: %.1f 秒)", 
+                            stagnation_duration, self.coverage_stagnation_threshold)
+                rospy.logwarn("当前覆盖率: %.3f%%, 上次显著变化: %.3f%%", 
+                            current_coverage * 100, self.last_recorded_coverage * 100)
+                
+                # 触发自动重启
+                self.trigger_auto_restart(elapsed_time)
+    
+    def trigger_auto_restart(self, elapsed_time):
+        """触发自动重启机制"""
+        try:
+            rospy.logwarn("=== 触发自动重启机制 ===")
+            rospy.logwarn("原因: 覆盖率停滞超过 %.1f 秒", self.coverage_stagnation_threshold)
+            rospy.logwarn("当前运行时间: %.1f 秒", elapsed_time)
+            rospy.logwarn("当前覆盖率: %.3f%%", self.coverage_percentage)
+            
+            # 保存当前状态报告
+            self.save_restart_report(elapsed_time)
+            
+            # 发布重启信号到话题
+            self.publish_restart_signal()
+            
+            # 稍等片刻确保数据保存
+            rospy.logwarn("正在保存数据并准备重启...")
+            time.sleep(2.0)
+            
+            # 执行重启
+            self.execute_restart()
+            
+        except Exception as e:
+            rospy.logerr("自动重启过程中出错: %s", str(e))
+    
+    def save_restart_report(self, elapsed_time):
+        """保存重启前的状态报告"""
+        try:
+            restart_report = f"""=== 自动重启报告 ===
+触发时间: {time.strftime('%Y-%m-%d %H:%M:%S')}
+重启原因: 覆盖率停滞超过 {self.coverage_stagnation_threshold:.1f} 秒
+运行时间: {elapsed_time:.1f} 秒 ({elapsed_time/60:.1f} 分钟)
+最终覆盖率: {self.coverage_percentage:.3f}%
+已清扫面积: {self.covered_area:.2f} m²
+路径长度: {self.path_length:.2f} 米
+路径点数: {len(self.path_history)}
+碰撞次数: {self.collision_count}
+
+重启前性能指标:
+- 运动效率: {self.path_length/self.covered_area if self.covered_area > 0 else 0:.3f} m/m²
+- 清洁冗余度: {self.redundant_area/(self.covered_area + self.redundant_area) if (self.covered_area + self.redundant_area) > 0 else 0:.3f}
+- 平均速度: {np.mean(list(self.velocity_history)) if self.velocity_history else 0:.3f} m/s
+
+即将执行重启命令: {self.restart_command}
+========================"""
+            
+            # 保存重启报告
+            restart_filename = f"/tmp/auto_restart_report_{int(time.time())}.txt"
+            with open(restart_filename, 'w', encoding='utf-8') as f:
+                f.write(restart_report)
+            
+            rospy.logwarn("重启报告已保存: %s", restart_filename)
+            print(restart_report)  # 同时输出到控制台
+            
+        except Exception as e:
+            rospy.logerr("保存重启报告失败: %s", str(e))
+    
+    def publish_restart_signal(self):
+        """发布重启信号到ROS话题"""
+        try:
+            # 这里可以发布一个自定义消息通知其他节点即将重启
+            rospy.loginfo("发布重启信号到ROS系统...")
+            
+            # 可以添加一个重启信号发布器
+            # restart_msg = std_msgs.msg.String()
+            # restart_msg.data = "auto_restart_triggered"
+            # self.restart_signal_pub.publish(restart_msg)
+            
+        except Exception as e:
+            rospy.logerr("发布重启信号失败: %s", str(e))
+    
+    def execute_restart(self):
+        """执行系统重启"""
+        import subprocess
+        import signal
+        import os
+        
+        try:
+            rospy.logwarn("开始执行自动重启...")
+            
+            # 首先优雅地关闭当前所有ROS节点
+            rospy.logwarn("正在关闭当前ROS节点...")
+            
+            # 发送关闭信号给所有相关节点
+            try:
+                subprocess.run(["rosnode", "kill", "-a"], timeout=10, check=False)
+                rospy.loginfo("ROS节点关闭命令已发送")
+            except Exception as e:
+                rospy.logwarn("关闭ROS节点时出错: %s", str(e))
+            
+            # 等待节点关闭
+            time.sleep(3.0)
+            
+            # 创建重启脚本
+            restart_script = f"""#!/bin/bash
+echo "=== 自动重启脚本开始执行 ==="
+echo "时间: $(date)"
+echo "原因: 覆盖率停滞超过 {self.coverage_stagnation_threshold:.1f} 秒"
+
+# 等待确保之前的进程完全关闭
+sleep 5
+
+# 设置ROS环境
+cd /home/getting/Sweeping-Robot
+source devel/setup.bash
+
+echo "启动新的清扫任务..."
+echo "命令: {self.restart_command}"
+
+# 启动新的清扫任务
+{self.restart_command}
+"""
+            
+            script_path = "/tmp/auto_restart_script.sh"
+            with open(script_path, 'w') as f:
+                f.write(restart_script)
+            
+            # 添加执行权限
+            os.chmod(script_path, 0o755)
+            
+            rospy.logwarn("重启脚本已创建: %s", script_path)
+            rospy.logwarn("即将在新进程中执行重启...")
+            
+            # 在新的终端中执行重启脚本
+            subprocess.Popen([
+                "gnome-terminal", "--", "bash", "-c", 
+                f"echo '自动重启执行中...'; {script_path}; read -p '按回车继续...'"
+            ])
+            
+            # 延时后关闭当前程序
+            rospy.logwarn("重启命令已启动，当前程序将在5秒后退出...")
+            time.sleep(5.0)
+            
+            # 优雅地关闭当前程序
+            rospy.signal_shutdown("自动重启触发")
+            
+        except Exception as e:
+            rospy.logerr("执行重启失败: %s", str(e))
+            rospy.logerr("请手动重启系统")
 
     def calculate_evaluation_metrics(self, elapsed_time):
         """计算所有评估指标"""
