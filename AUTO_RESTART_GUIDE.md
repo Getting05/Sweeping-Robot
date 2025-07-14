@@ -22,7 +22,7 @@
   5. 继续监控循环
 
 ### 3. 安全保护机制
-- **最大重启次数**: 50次 (防止无限循环)
+- **最大重启次数**: 500次 (防止无限循环)
 - **重启间隔**: 60秒 (确保系统稳定)
 - **详细日志**: 记录每次重启的详细信息
 - **状态报告**: 保存重启前的完整性能指标
@@ -78,10 +78,10 @@ self.restart_command = "roslaunch auto_nav sequential_clean.launch"
 ### auto_restart_manager.sh 中的配置
 ```bash
 # 最大重启次数
-MAX_RESTART_COUNT=10
+MAX_RESTART_COUNT=500
 
 # 重启间隔 (秒)
-RESTART_DELAY=10
+RESTART_DELAY=60
 
 # 项目根目录
 PROJECT_ROOT="/home/getting/Sweeping-Robot"

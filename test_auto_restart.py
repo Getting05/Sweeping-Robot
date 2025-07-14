@@ -71,7 +71,7 @@ def show_feature_details():
     print("\n3. 重启管理器功能:")
     print("   - 监控coverage_monitor的重启信号")
     print("   - 自动清理和重启清扫系统")
-    print("   - 最大重启次数限制 (10次)")
+    print("   - 最大重启次数限制 (500次)")
     print("   - 详细的日志记录")
     
     print("\n4. 安全机制:")
