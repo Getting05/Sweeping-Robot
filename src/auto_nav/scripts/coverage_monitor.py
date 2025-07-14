@@ -74,11 +74,11 @@ class CoverageMonitor:
         # 定时CSV保存相关
         self.csv_save_interval = 30.0  # 30秒自动保存一次
         self.last_csv_save_time = time.time()
-        self.csv_filename = f"/tmp/sweeping_robot_realtime_data_{int(time.time())}.csv"
+        self.csv_filename = f"/home/getting/tmp/sweeping_robot_realtime_data_{int(time.time())}.csv"
         self.csv_initialized = False
         
         # 覆盖率停滞检测和自动重启相关
-        self.coverage_stagnation_threshold = 120.0  # 2分钟无变化阈值
+        self.coverage_stagnation_threshold = 20.0  # 20秒无变化阈值
         self.last_coverage_change_time = time.time()
         self.last_recorded_coverage = 0.0
         self.coverage_change_tolerance = 0.001  # 覆盖率变化最小阈值 (0.1%)
@@ -404,12 +404,12 @@ Jerk_avg (平均加加速度): {metrics['Jerk_avg']:.3f} m/s³
 ========================"""
             
             # 保存到文件
-            filename = f"/tmp/sweeping_robot_report_{int(time.time())}.txt"
+            filename = f"/home/getting/tmp/sweeping_robot_report_{int(time.time())}.txt"
             with open(filename, 'w', encoding='utf-8') as f:
                 f.write(report)
             
             # 同时保存CSV格式用于数据分析
-            csv_filename = f"/tmp/sweeping_robot_metrics_{int(time.time())}.csv"
+            csv_filename = f"/home/getting/tmp/sweeping_robot_metrics_{int(time.time())}.csv"
             with open(csv_filename, 'w', encoding='utf-8') as f:
                 f.write("指标,数值,单位,说明\n")
                 f.write(f"CR,{metrics['CR']:.3f},,覆盖率\n")
@@ -633,7 +633,7 @@ Jerk_avg (平均加加速度): {metrics['Jerk_avg']:.3f} m/s³
 ========================"""
             
             # 保存重启报告
-            restart_filename = f"/tmp/auto_restart_report_{int(time.time())}.txt"
+            restart_filename = f"/home/getting/tmp/auto_restart_report_{int(time.time())}.txt"
             with open(restart_filename, 'w', encoding='utf-8') as f:
                 f.write(restart_report)
             
@@ -699,7 +699,7 @@ echo "命令: {self.restart_command}"
 {self.restart_command}
 """
             
-            script_path = "/tmp/auto_restart_script.sh"
+            script_path = "/home/getting/tmp/auto_restart_script.sh"
             with open(script_path, 'w') as f:
                 f.write(restart_script)
             
