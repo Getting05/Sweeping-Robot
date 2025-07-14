@@ -16,8 +16,8 @@ NC='\033[0m' # No Color
 PROJECT_ROOT="/home/getting/Sweeping-Robot"
 LAUNCH_COMMAND="roslaunch auto_nav sequential_clean.launch"
 LOG_DIR="/home/getting/tmp/auto_restart_logs"
-MAX_RESTART_COUNT=50  # 最大重启次数
-RESTART_DELAY=10      # 重启间隔秒数
+MAX_RESTART_COUNT=500  # 最大重启次数
+RESTART_DELAY=60      # 重启间隔秒数
 
 # 全局变量
 restart_count=0

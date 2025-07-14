@@ -136,7 +136,7 @@ smart_start() {
     print_info "- 覆盖率监控: 启用"
     print_info "- CSV数据记录: 启用 (每30秒)"
     print_info "- 自动重启: 启用 (2分钟停滞阈值)"
-    print_info "- 最大重启次数: 50次"
+    print_info "- 最大重启次数: 500次"
     
     echo ""
     read -p "确认启动? [Y/n]: " confirm
