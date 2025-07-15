@@ -1,0 +1,23 @@
+# 路径规划算法配置文件
+# 设置使用的路径规划算法类型
+# 可选值: "astar", "neural"
+path_planning_algorithm: "astar"
+
+# 栅格单元大小（必须是奇数）
+size_of_cell: 3
+
+# 栅格覆盖值
+grid_covered_value: 0
+
+# A*算法特定参数
+astar:
+  heuristic_weight: 1.0        # 启发式权重
+  move_cost_straight: 1.0      # 直线移动代价
+  move_cost_diagonal: 1.414    # 对角线移动代价 (sqrt(2))
+  max_iterations: 10000        # 最大迭代次数
+  coverage_strategy: "nearest" # 覆盖策略: "nearest", "farthest", "spiral"
+
+# 神经网络算法特定参数
+neural:
+  c_0: 50.0                    # 神经网络参数
+  max_iterations: 9000         # 最大迭代次数

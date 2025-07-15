@@ -23,6 +23,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_srvs
   nav_msgs
   tf
+  message_generation
 )
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
@@ -77,11 +78,11 @@ find_package(catkin REQUIRED
 # )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+  FILES
+  SetPathPlanningAlgorithm.srv
+  SetAlgorithmParameter.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -91,10 +92,10 @@ find_package(catkin REQUIRED
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -128,7 +129,7 @@ find_package(catkin REQUIRED
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES auto_nav
- CATKIN_DEPENDS amcl actionlib costmap_2d gmapping map_server move_base roscpp std_msgs geometry_msgs move_base_msgs nav_msgs tf
+ CATKIN_DEPENDS amcl actionlib costmap_2d gmapping map_server move_base roscpp std_msgs geometry_msgs move_base_msgs nav_msgs tf message_runtime
  DEPENDS system_lib
 )
 
@@ -156,7 +157,13 @@ include
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(path_planning src/path_planning.cpp src/path_planning_node.cpp)
+add_executable(path_planning 
+  src/path_planning.cpp 
+  src/path_planning_node.cpp
+  src/path_planning_algorithm.cpp
+  src/astar_algorithm.cpp
+  src/neural_algorithm.cpp
+)
 add_executable(next_goal src/next_goal.cpp)
 add_executable(sequential_goal src/sequential_goal.cpp)
 add_executable(test_goal src/test_goal.cpp)
@@ -168,8 +175,7 @@ add_executable(test_path src/test_path.cpp)
 # set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
 
 ## Add cmake target dependencies of the executable
-## same as for the library above
-# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(path_planning ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node

@@ -1,13 +1,13 @@
 #ifndef PATH_PLANNING_H
 #define PATH_PLANNING_H
 
-
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <vector>
 #include <string>
+#include <memory>
 
 #include "tf/tf.h"
 #include "tf/transform_listener.h"
@@ -15,20 +15,12 @@
 #include <costmap_2d/costmap_2d_ros.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Path.h>
+#include "path_planning_algorithm.h"
 
 using namespace cv;
 using namespace std;
 
-
-constexpr double PI =3.14159;
-
-
-struct CellIndex
-{
-    int row;
-    int col;
-    double theta;       // {0,45,90,135,180,225,270,315}
-};
+constexpr double PI = 3.14159;
 
 
 class PathPlanning
@@ -41,6 +33,12 @@ public:
     void publishCoveragePath();                             // 用于可视化
 
     int getSizeOfCell() { return this->m_cellSize; }        // 获取一个单元格有几个栅格，只能为奇数
+    
+    // 新增：算法管理接口
+    void setAlgorithm(const string& algorithm_type);        // 设置路径规划算法
+    void setAlgorithmParameter(const string& param_name, double param_value); // 设置算法参数
+    string getCurrentAlgorithmName() const;                 // 获取当前算法名称
+    vector<string> getAvailableAlgorithms() const;          // 获取可用算法列表
 
 private:
     void initMat();                         // 初始化m_cellMat和m_neuralMat
@@ -66,7 +64,11 @@ private:
     ros::Publisher m_gridPub;               // 发布机器人走过的路径，rviz显示
 
     int m_cellSize;             // 新的栅格大小，必须是原来栅格的奇数倍
-    int m_gridCoveredValue;    
+    int m_gridCoveredValue;
+    
+    // 新增：算法接口相关
+    shared_ptr<PathPlanningAlgorithm> m_algorithm;    // 当前使用的路径规划算法
+    string m_algorithmType;                           // 当前算法类型
 };
 
 #endif

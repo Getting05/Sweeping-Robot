@@ -1,0 +1,6 @@
+# 设置算法参数服务定义
+string param_name       # 参数名称
+float64 param_value     # 参数值
+---
+bool success           # 是否成功设置
+string message         # 返回消息

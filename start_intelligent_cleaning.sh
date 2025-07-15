@@ -131,8 +131,92 @@ smart_start() {
     read -p "请输入地图名称 [$DEFAULT_MAP]: " map_name
     map_name=${map_name:-$DEFAULT_MAP}
     
+    # 算法选择菜单
+    echo ""
+    echo -e "${BLUE}=== 路径规划算法选择 ===${NC}"
+    echo "1) A*算法 (astar) - 基于启发式搜索，路径质量优秀"
+    echo "2) 神经网络算法 (neural) - 快速响应，计算复杂度低"
+    echo ""
+    
+    while true; do
+        read -p "请选择路径规划算法 [1-2]: " algorithm_choice
+        case $algorithm_choice in
+            1)
+                selected_algorithm="astar"
+                algorithm_name="A*算法"
+                break
+                ;;
+            2)
+                selected_algorithm="neural"
+                algorithm_name="神经网络算法"
+                break
+                ;;
+            *)
+                print_warning "无效选择，请输入 1 或 2"
+                ;;
+        esac
+    done
+    
+    # 显示算法参数设置选项
+    echo ""
+    echo -e "${BLUE}=== 算法参数配置 ===${NC}"
+    if [ "$selected_algorithm" = "astar" ]; then
+        echo "A*算法参数:"
+        echo "- 启发式权重 (heuristic_weight): 1.0"
+        echo "- 覆盖策略 (coverage_strategy): nearest"
+        echo "- 最大迭代次数 (max_iterations): 10000"
+        echo ""
+        read -p "是否使用自定义参数? [y/N]: " custom_params
+        
+        if [[ "$custom_params" =~ ^[Yy]$ ]]; then
+            read -p "启发式权重 [1.0]: " heuristic_weight
+            heuristic_weight=${heuristic_weight:-1.0}
+            
+            echo "覆盖策略选项:"
+            echo "1) nearest - 优先访问最近的未覆盖点"
+            echo "2) farthest - 优先访问最远的未覆盖点"
+            echo "3) spiral - 螺旋式覆盖策略"
+            read -p "选择覆盖策略 [1]: " strategy_choice
+            case $strategy_choice in
+                2) coverage_strategy="farthest" ;;
+                3) coverage_strategy="spiral" ;;
+                *) coverage_strategy="nearest" ;;
+            esac
+            
+            read -p "最大迭代次数 [10000]: " max_iterations
+            max_iterations=${max_iterations:-10000}
+        else
+            heuristic_weight=1.0
+            coverage_strategy="nearest"
+            max_iterations=10000
+        fi
+    else
+        echo "神经网络算法参数:"
+        echo "- 网络参数 (c_0): 50.0"
+        echo "- 最大迭代次数 (max_iterations): 9000"
+        echo ""
+        read -p "是否使用自定义参数? [y/N]: " custom_params
+        
+        if [[ "$custom_params" =~ ^[Yy]$ ]]; then
+            read -p "网络参数 c_0 [50.0]: " c_0
+            c_0=${c_0:-50.0}
+            
+            read -p "最大迭代次数 [9000]: " max_iterations
+            max_iterations=${max_iterations:-9000}
+        else
+            c_0=50.0
+            max_iterations=9000
+        fi
+    fi
+    
     print_info "启动配置:"
     print_info "- 地图: $map_name"
+    print_info "- 路径规划算法: $algorithm_name ($selected_algorithm)"
+    if [ "$selected_algorithm" = "astar" ]; then
+        print_info "- A*参数: weight=$heuristic_weight, strategy=$coverage_strategy, max_iter=$max_iterations"
+    else
+        print_info "- 神经网络参数: c_0=$c_0, max_iter=$max_iterations"
+    fi
     print_info "- 覆盖率监控: 启用"
     print_info "- CSV数据记录: 启用 (每30秒)"
     print_info "- 自动重启: 启用 (2分钟停滞阈值)"
@@ -145,6 +229,47 @@ smart_start() {
         return
     fi
     
+    # 创建临时配置文件
+    local temp_config="/home/getting/tmp/path_planning_params_temp.yaml"
+    mkdir -p "/home/getting/tmp"
+    
+    print_info "生成算法配置文件..."
+    cat > "$temp_config" << EOF
+# 临时路径规划算法配置文件 - 由智能启动脚本生成
+path_planning_algorithm: "$selected_algorithm"
+
+# 栅格单元大小（必须是奇数）
+size_of_cell: 3
+
+# 栅格覆盖值
+grid_covered_value: 0
+
+# A*算法特定参数
+astar:
+  heuristic_weight: ${heuristic_weight:-1.0}
+  move_cost_straight: 1.0
+  move_cost_diagonal: 1.414
+  max_iterations: ${max_iterations:-10000}
+  coverage_strategy: "${coverage_strategy:-nearest}"
+
+# 神经网络算法特定参数
+neural:
+  c_0: ${c_0:-50.0}
+  max_iterations: ${max_iterations:-9000}
+EOF
+
+    # 备份原配置文件并使用临时配置
+    local original_config="$PROJECT_ROOT/src/auto_nav/config/path_planning_params.yaml"
+    local backup_config="$PROJECT_ROOT/src/auto_nav/config/path_planning_params.yaml.backup.$(date +%Y%m%d_%H%M%S)"
+    
+    if [ -f "$original_config" ]; then
+        cp "$original_config" "$backup_config"
+        print_info "原配置文件已备份到: $backup_config"
+    fi
+    
+    cp "$temp_config" "$original_config"
+    print_info "算法配置已更新"
+    
     # 修改自动重启管理器的启动命令以包含地图参数
     local temp_manager="/home/getting/tmp/auto_restart_manager_temp.sh"
     sed "s|sequential_clean.launch|sequential_clean.launch map_name:=$map_name|g" \
@@ -154,8 +279,40 @@ smart_start() {
     print_info "启动智能管理器..."
     "$temp_manager" start
     
+    # 启动后等待一段时间，然后设置算法参数（如果需要）
+    if [[ "$custom_params" =~ ^[Yy]$ ]]; then
+        print_info "等待系统启动完成..."
+        sleep 10
+        
+        print_info "设置算法参数..."
+        source "$PROJECT_ROOT/devel/setup.bash"
+        
+        # 通过ROS服务设置算法
+        if rosservice call /path_planning/set_algorithm "algorithm_type: '$selected_algorithm'" 2>/dev/null; then
+            print_status "算法设置成功: $selected_algorithm"
+        else
+            print_warning "算法服务暂未就绪，将在启动完成后自动生效"
+        fi
+        
+        # 设置具体参数
+        if [ "$selected_algorithm" = "astar" ]; then
+            if [ "$heuristic_weight" != "1.0" ]; then
+                rosservice call /path_planning/set_parameter "param_name: 'heuristic_weight' param_value: $heuristic_weight" 2>/dev/null || true
+            fi
+        else
+            if [ "$c_0" != "50.0" ]; then
+                rosservice call /path_planning/set_parameter "param_name: 'c_0' param_value: $c_0" 2>/dev/null || true
+            fi
+        fi
+    fi
+    
     # 清理临时文件
-    rm -f "$temp_manager"
+    rm -f "$temp_manager" "$temp_config"
+    
+    print_status "智能清扫系统启动完成！"
+    print_info "使用的算法: $algorithm_name ($selected_algorithm)"
+    print_info "要停止系统，请运行: $0 stop"
+    print_info "要查看运行状态，请运行: $0 status"
 }
 
 # 仅启动覆盖监控

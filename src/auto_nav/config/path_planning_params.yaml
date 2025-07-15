@@ -1,0 +1,21 @@
+# 临时路径规划算法配置文件 - 由智能启动脚本生成
+path_planning_algorithm: "astar"
+
+# 栅格单元大小（必须是奇数）
+size_of_cell: 3
+
+# 栅格覆盖值
+grid_covered_value: 0
+
+# A*算法特定参数
+astar:
+  heuristic_weight: 1.0
+  move_cost_straight: 1.0
+  move_cost_diagonal: 1.414
+  max_iterations: 10000
+  coverage_strategy: "nearest"
+
+# 神经网络算法特定参数
+neural:
+  c_0: 50.0
+  max_iterations: 10000

@@ -1,0 +1,6 @@
+# 路径规划算法服务定义
+string algorithm_type    # 算法类型 ("astar", "neural" 等)
+---
+bool success            # 是否成功切换
+string message          # 返回消息
+string[] available_algorithms  # 可用算法列表
