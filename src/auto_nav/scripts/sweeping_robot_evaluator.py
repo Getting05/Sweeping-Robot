@@ -78,8 +78,10 @@ class SweepingRobotEvaluator:
         self.collision_count = 0
         self.last_position_for_collision = None
         self.stuck_threshold = 0.05  # 卡住检测阈值
-        self.stuck_time_threshold = 3.0  # 卡住时间阈值
+        self.stuck_time_threshold = 10.0  # 卡住时间阈值
         self.stuck_start_time = None
+        self.collision_cooldown = 15.0  # 碰撞检测冷却时间(秒)
+        self.last_collision_time = 0.0  # 上次碰撞检测时间
         
         # 路径规划相关
         self.planned_path = []
@@ -120,6 +122,7 @@ class SweepingRobotEvaluator:
         
         rospy.loginfo("=== 扫地机器人评估系统启动 ===")
         rospy.loginfo("输出目录: %s", self.output_dir)
+        rospy.loginfo("碰撞检测冷却时间: %.1f 秒", self.collision_cooldown)
         
     def map_callback(self, msg):
         """处理地图数据"""
@@ -245,7 +248,13 @@ class SweepingRobotEvaluator:
                 rospy.loginfo("所有路径点已完成！")
     
     def detect_collision(self, position, current_time):
-        """检测碰撞（通过卡住检测）"""
+        """检测碰撞（通过卡住检测），带15秒冷却功能"""
+        # 检查是否在冷却期内
+        if current_time - self.last_collision_time < self.collision_cooldown:
+            # 在冷却期内，不进行碰撞检测，但继续更新位置信息
+            self.last_position_for_collision = position
+            return
+        
         if self.last_position_for_collision is not None:
             dist = math.sqrt((position[0] - self.last_position_for_collision[0])**2 +
                            (position[1] - self.last_position_for_collision[1])**2)
@@ -255,7 +264,8 @@ class SweepingRobotEvaluator:
                     self.stuck_start_time = current_time
                 elif current_time - self.stuck_start_time > self.stuck_time_threshold:
                     self.collision_count += 1
-                    rospy.logwarn("检测到碰撞/卡住事件，总计: %d", self.collision_count)
+                    self.last_collision_time = current_time  # 记录碰撞时间，开始冷却
+                    rospy.logwarn("检测到碰撞/卡住事件，总计: %d (开始15秒冷却)", self.collision_count)
                     self.stuck_start_time = None
             else:
                 self.stuck_start_time = None

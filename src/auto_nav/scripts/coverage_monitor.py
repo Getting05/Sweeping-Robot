@@ -64,8 +64,10 @@ class CoverageMonitor:
         self.collision_count = 0
         self.last_position_for_collision = None
         self.stuck_threshold = 0.05  # 卡住检测阈值(米)
-        self.stuck_time_threshold = 3.0  # 卡住时间阈值(秒)
+        self.stuck_time_threshold = 10.0  # 卡住时间阈值(秒)
         self.stuck_start_time = None
+        self.collision_cooldown = 15.0  # 碰撞检测冷却时间(秒)
+        self.last_collision_time = 0.0  # 上次碰撞检测时间
         
         # 计算时间监控
         self.computation_times = []
@@ -104,6 +106,7 @@ class CoverageMonitor:
         rospy.loginfo("Auto CSV save interval: %.0f seconds", self.csv_save_interval)
         rospy.loginfo("Coverage stagnation threshold: %.0f seconds", self.coverage_stagnation_threshold)
         rospy.loginfo("Auto restart enabled: %s", self.auto_restart_enabled)
+        rospy.loginfo("Collision detection cooldown: %.1f seconds", self.collision_cooldown)
         rospy.loginfo("Realtime CSV file: %s", self.csv_filename)
     
     def map_callback(self, msg):
@@ -465,7 +468,13 @@ Jerk_avg (平均加加速度): {metrics['Jerk_avg']:.3f} m/s³
             rospy.logerr("里程计处理错误: %s", str(e))
     
     def detect_collision(self, position, current_time):
-        """检测碰撞（通过卡住检测）"""
+        """检测碰撞（通过卡住检测），带15秒冷却功能"""
+        # 检查是否在冷却期内
+        if current_time - self.last_collision_time < self.collision_cooldown:
+            # 在冷却期内，不进行碰撞检测，但继续更新位置信息
+            self.last_position_for_collision = position
+            return
+        
         if self.last_position_for_collision is not None:
             dist = math.sqrt((position[0] - self.last_position_for_collision[0])**2 +
                            (position[1] - self.last_position_for_collision[1])**2)
@@ -475,7 +484,8 @@ Jerk_avg (平均加加速度): {metrics['Jerk_avg']:.3f} m/s³
                     self.stuck_start_time = current_time
                 elif current_time - self.stuck_start_time > self.stuck_time_threshold:
                     self.collision_count += 1
-                    rospy.logwarn("检测到碰撞/卡住事件，总计: %d", self.collision_count)
+                    self.last_collision_time = current_time  # 记录碰撞时间，开始冷却
+                    rospy.logwarn("检测到碰撞/卡住事件，总计: %d (开始15秒冷却)", self.collision_count)
                     self.stuck_start_time = None
             else:
                 self.stuck_start_time = None
