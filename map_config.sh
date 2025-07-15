@@ -2,7 +2,7 @@
 # 在这里设置当前使用的地图名称
 
 # 当前激活的地图 (不包含扩展名)
-CURRENT_MAP=lobby_5
+CURRENT_MAP=restaurant_10
 
 # 可用的地图列表
 AVAILABLE_MAPS=(
@@ -10,6 +10,9 @@ AVAILABLE_MAPS=(
     "hospital_0.1"
     "lobby_1"
     "lobby_5"
+    "restaurant_1"
+    "restaurant_10"
+    "restaurant_5"
     # 在这里添加更多地图
 )
 

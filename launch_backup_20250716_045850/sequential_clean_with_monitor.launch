@@ -3,7 +3,7 @@
   <include file="$(find robot)/launch/robot_headless.launch"/>
 
   <!-- 加载全局地图 -->
-  <node name="map_server" pkg="map_server" type="map_server" args="$(find auto_nav)/map/restaurant_10.yaml"/>
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find auto_nav)/map/lobby_5.yaml"/>
   
   <!-- AMCL定位 -->
   <include file="$(find auto_nav)/launch/amcl.launch" />
