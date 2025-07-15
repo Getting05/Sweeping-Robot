@@ -17,7 +17,7 @@ PROJECT_ROOT="/home/getting/Sweeping-Robot"
 LAUNCH_COMMAND="roslaunch auto_nav sequential_clean.launch"
 LOG_DIR="/home/getting/tmp/auto_restart_logs"
 MAX_RESTART_COUNT=500  # 最大重启次数
-RESTART_DELAY=60      # 重启间隔秒数
+RESTART_DELAY=20      # 重启间隔秒数
 
 # 全局变量
 restart_count=0
@@ -73,7 +73,7 @@ cleanup_previous_processes() {
     pkill -f "path_planning" || true
     
     # 等待进程完全关闭
-    sleep 60
+    sleep 20
     
     print_status "进程清理完成"
 }
