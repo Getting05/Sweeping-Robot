@@ -55,7 +55,8 @@ show_main_menu() {
     echo "4) 🗺️  地图管理"
     echo "5) 📈 数据分析工具"
     echo "6) 🔧 系统管理"
-    echo "7) 📖 使用说明"
+    echo "7) 🤖 算法管理 (NEW!)"
+    echo "8) 📖 使用说明"
     echo "0) 退出"
     echo ""
 }
@@ -398,6 +399,103 @@ system_management() {
     done
 }
 
+# 显示算法选择菜单
+show_algorithm_menu() {
+    echo -e "${BLUE}=== 路径规划算法选择 ===${NC}"
+    echo "1) Neural Network (神经网络 - 原算法)"
+    echo "2) A* Algorithm (A*搜索算法)"
+    echo "3) D* Algorithm (D*动态算法)"
+    echo "4) MCP Snake (蛇形覆盖算法)"
+    echo "5) MCP Spiral (螺旋覆盖算法)"
+    echo "6) MCP Zone (分区覆盖算法)"
+    echo "0) 使用默认算法"
+    echo ""
+}
+
+# 算法管理
+algorithm_management() {
+    while true; do
+        show_algorithm_menu
+        read -p "请选择路径规划算法 [0-6]: " choice
+        
+        case $choice in
+            1)
+                print_info "设置算法: Neural Network"
+                rosparam set /algorithm_type "neural_network" 2>/dev/null || true
+                rostopic pub /switch_algorithm std_msgs/String "data: 'neural_network'" --once 2>/dev/null || true
+                print_status "已切换到神经网络算法"
+                ;;
+            2)
+                print_info "设置算法: A*"
+                read -p "请输入启发式权重 [1.0]: " weight
+                weight=${weight:-1.0}
+                rosparam set /algorithm_type "astar" 2>/dev/null || true
+                rosparam set /heuristic_weight "$weight" 2>/dev/null || true
+                rostopic pub /switch_algorithm std_msgs/String "data: 'astar'" --once 2>/dev/null || true
+                print_status "已切换到A*算法 (权重: $weight)"
+                ;;
+            3)
+                print_info "设置算法: D*"
+                rosparam set /algorithm_type "dstar" 2>/dev/null || true
+                rostopic pub /switch_algorithm std_msgs/String "data: 'dstar'" --once 2>/dev/null || true
+                print_status "已切换到D*算法"
+                ;;
+            4)
+                print_info "设置算法: MCP Snake (蛇形覆盖)"
+                rosparam set /algorithm_type "mcp" 2>/dev/null || true
+                rosparam set /coverage_pattern 0 2>/dev/null || true
+                rostopic pub /switch_algorithm std_msgs/String "data: 'mcp'" --once 2>/dev/null || true
+                print_status "已切换到MCP蛇形覆盖算法"
+                ;;
+            5)
+                print_info "设置算法: MCP Spiral (螺旋覆盖)"
+                rosparam set /algorithm_type "mcp" 2>/dev/null || true
+                rosparam set /coverage_pattern 1 2>/dev/null || true
+                rostopic pub /switch_algorithm std_msgs/String "data: 'mcp'" --once 2>/dev/null || true
+                print_status "已切换到MCP螺旋覆盖算法"
+                ;;
+            6)
+                print_info "设置算法: MCP Zone (分区覆盖)"
+                rosparam set /algorithm_type "mcp" 2>/dev/null || true
+                rosparam set /coverage_pattern 2 2>/dev/null || true
+                rostopic pub /switch_algorithm std_msgs/String "data: 'mcp'" --once 2>/dev/null || true
+                print_status "已切换到MCP分区覆盖算法"
+                ;;
+            0)
+                print_info "使用默认算法 (Neural Network)"
+                return
+                ;;
+            *)
+                print_error "无效选择"
+                ;;
+        esac
+        
+        echo ""
+        read -p "按回车继续..."
+        break
+    done
+}
+
+# 显示当前算法状态
+show_algorithm_status() {
+    print_info "=== 当前算法状态 ==="
+    
+    local current_algo=$(rosparam get /algorithm_type 2>/dev/null || echo "未设置")
+    local heuristic_weight=$(rosparam get /heuristic_weight 2>/dev/null || echo "1.0")
+    local coverage_pattern=$(rosparam get /coverage_pattern 2>/dev/null || echo "0")
+    
+    echo "当前算法: $current_algo"
+    echo "A*权重: $heuristic_weight"
+    echo "覆盖模式: $coverage_pattern (0-蛇形, 1-螺旋, 2-分区)"
+    
+    # 检查算法节点状态
+    if pgrep -f path_planning > /dev/null; then
+        echo "路径规划节点: 运行中"
+    else
+        echo "路径规划节点: 未运行"
+    fi
+}
+
 # 显示使用说明
 show_usage() {
     print_info "=== 使用说明 ==="
@@ -414,6 +512,16 @@ show_usage() {
 • 覆盖率停滞2分钟自动重启
 • 智能地图管理和切换
 • 完整的性能评估报告
+• 🆕 多算法支持 (Neural Network, A*, D*, MCP)
+• 🆕 实时算法切换功能
+
+🤖 支持的路径规划算法:
+• Neural Network: 原有神经网络算法 (默认)
+• A* Algorithm: 启发式搜索算法，适合点到点规划
+• D* Algorithm: 动态环境下的增量规划
+• MCP Snake: 蛇形覆盖模式，适合规则区域
+• MCP Spiral: 螺旋覆盖模式，适合中心向外扩展
+• MCP Zone: 分区覆盖模式，适合大型区域
 
 🔧 文件位置:
 • CSV数据: /home/getting/tmp/sweeping_robot_realtime_data_*.csv
@@ -430,6 +538,14 @@ show_usage() {
 • 状态检查: ./auto_restart_manager.sh status
 • 停止服务: ./auto_restart_manager.sh stop
 • 数据分析: python3 analyze_csv_data.py
+• 🆕 算法切换: rostopic pub /switch_algorithm std_msgs/String "data: 'astar'"
+• 🆕 接口测试: ./test_path_planning_interface.sh
+
+🔧 算法切换示例:
+• 切换到A*: rostopic pub /switch_algorithm std_msgs/String "data: 'astar'" --once
+• 切换到蛇形覆盖: rostopic pub /switch_algorithm std_msgs/String "data: 'mcp'" --once
+• 设置覆盖模式: rosparam set /coverage_pattern 0  # 0-蛇形, 1-螺旋, 2-分区
+• 查看当前算法: rosparam get /algorithm_type
 
 EOF
 }
@@ -446,7 +562,7 @@ main() {
     
     while true; do
         show_main_menu
-        read -p "请选择操作 [0-7]: " choice
+        read -p "请选择操作 [0-8]: " choice
         
         case $choice in
             1)
@@ -468,6 +584,9 @@ main() {
                 system_management
                 ;;
             7)
+                algorithm_management
+                ;;
+            8)
                 show_usage
                 read -p "按回车继续..."
                 ;;

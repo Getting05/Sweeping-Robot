@@ -156,11 +156,12 @@ include
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(path_planning src/path_planning.cpp src/path_planning_node.cpp)
+add_executable(path_planning src/path_planning.cpp src/path_planning_node.cpp src/path_planning_interface.cpp)
 add_executable(next_goal src/next_goal.cpp)
 add_executable(sequential_goal src/sequential_goal.cpp)
 add_executable(test_goal src/test_goal.cpp)
 add_executable(test_path src/test_path.cpp)
+add_executable(algorithm_switcher_demo src/algorithm_switcher_demo.cpp src/path_planning_interface.cpp)
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -187,6 +188,9 @@ target_link_libraries(test_goal
 )
 target_link_libraries(test_path
 	${catkin_LIBRARIES}
+)
+target_link_libraries(algorithm_switcher_demo
+	${catkin_LIBRARIES} ${OpenCV_LIBS}
 )
 #############
 ## Install ##

@@ -1,0 +1,17 @@
+# 路径规划算法配置文件
+# 支持的算法类型: neural_network, astar, dstar, mcp
+
+# 当前使用的算法类型
+algorithm_type: "neural_network"
+
+# 算法参数配置
+# A*算法参数
+heuristic_weight: 1.0
+
+# MCP算法参数 (覆盖路径规划)
+# coverage_pattern: 0 - 蛇形模式, 1 - 螺旋模式, 2 - 分区模式
+coverage_pattern: 0
+
+# 原有的路径规划参数 (保持不变)
+size_of_cell: 3
+grid_covered_value: 0

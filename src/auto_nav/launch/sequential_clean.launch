@@ -15,6 +15,7 @@
   <node pkg="auto_nav" type="path_planning" respawn="false" name="path_planning" output="screen" clear_params="true">
     <rosparam file="$(find auto_nav)/config/costmap_common_params.yaml" command="load" ns="cleaning_costmap" />
     <rosparam file="$(find auto_nav)/config/cleaning_costmap_params.yaml" command="load" />
+    <rosparam file="$(find auto_nav)/config/path_planning_algorithms.yaml" command="load" />
   </node>
   
   <!-- 设置目标容差参数 -->
