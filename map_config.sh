@@ -2,7 +2,7 @@
 # 在这里设置当前使用的地图名称
 
 # 当前激活的地图 (不包含扩展名)
-CURRENT_MAP=restaurant_10
+CURRENT_MAP=office_0.05
 
 # 可用的地图列表
 AVAILABLE_MAPS=(
@@ -13,6 +13,8 @@ AVAILABLE_MAPS=(
     "restaurant_1"
     "restaurant_10"
     "restaurant_5"
+    "isaacwarehouse_5"
+    "office_0.05"
     # 在这里添加更多地图
 )
 
