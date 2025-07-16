@@ -1,0 +1,7 @@
+image: /home/getting/Sweeping-Robot/src/auto_nav/map/office_0.05.pgm
+resolution: 0.020000
+origin: [-15.000000, -5.000000, 0.000000]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.196
+
