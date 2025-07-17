@@ -2,7 +2,7 @@
   <include file="$(find robot)/launch/robot.launch"/>
 
   <!-- 加载全局地图 -->
-  <node name="map_server" pkg="map_server" type="map_server" args="$(find auto_nav)/map/isaacwarehouse_5.yaml"/>
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find auto_nav)/map/restaurant_5.yaml"/>
   <!-- AMCL -->
   <include file="$(find auto_nav)/launch/amcl.launch" />
   <!-- 运行move_base节点 -->
