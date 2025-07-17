@@ -80,7 +80,7 @@ class CoverageMonitor:
         self.csv_initialized = False
         
         # 覆盖率停滞检测和自动重启相关
-        self.coverage_stagnation_threshold = 60.0  # 60秒无变化阈值
+        self.coverage_stagnation_threshold = 120  # 60秒无变化阈值
         self.last_coverage_change_time = time.time()
         self.last_recorded_coverage = 0.0
         self.coverage_change_tolerance = 0.001  # 覆盖率变化最小阈值 (0.1%)

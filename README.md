@@ -34,9 +34,36 @@
 - **m-explore** 开源的explore_lite算法
 - **manual_nav** 手动建图和手动导航的功能包
 - **auto_nav** 自主建图和自主导航的功能包
-    - *path_planning.cpp* 为扫地路径规划代码
+    - *path_planning.cpp* 为扫地路径规划代码（**新：使用A*算法实现全覆盖路径规划**）
     - *path_planning_node.cpp* 发布规划好的路径的节点
     - *next_goal.cpp* 发布下一个目标点的节点
+    - *sequential_goal.cpp* 顺序目标点管理节点
+
+### 🆕 最新更新：A*全覆盖路径规划算法
+本项目已将原有的神经网络式路径规划算法完全重构为基于A*算法的全覆盖路径规划系统：
+
+#### 核心特性
+- 🎯 **A*算法保证**：确保找到最优路径
+- 🗺️ **全覆盖策略**：网格划分确保不遗漏任何区域  
+- 🔧 **路径优化**：自动平滑和优化路径
+- 📊 **性能可控**：计算复杂度和内存使用可预测
+- 🛡️ **稳定可靠**：避免死锁，算法确定性强
+
+#### 快速测试
+```bash
+# 测试A*路径规划算法
+./test_astar_coverage.sh
+
+# 或使用Python验证器
+python3 validate_astar.py
+
+# 启动完整清扫系统
+./start_intelligent_cleaning.sh smart
+```
+
+#### 相关文档
+- `ASTAR_COVERAGE_ALGORITHM_GUIDE.md` - 详细算法实现指南
+- `ASTAR_IMPLEMENTATION_SUMMARY.md` - 算法改造完成报告
 
 ### 使用说明
 1. 在该工程的根目录编译项目： ``catkin_make``
